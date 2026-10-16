@@ -39,6 +39,7 @@
 }
 html,
 body {
+  font-family: var(--f-texte), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--fin-fond);
   color: var(--fin-encre);
   -webkit-font-smoothing: antialiased;
@@ -1206,4 +1207,73 @@ textarea.fin-input {
     background: rgba(255, 255, 255, 0.12);
     color: var(--fin-accent);
   }
+}
+
+/* ═══ Typographie : Montserrat (titres, chiffres, marque), Manrope (texte) ═══ */
+.fin h1,
+.fin h2,
+.fin-hero-sur,
+.fin-accueil-titre,
+.fin-marque-texte,
+.fin-montant,
+.fin-stat .n,
+.fin-btn,
+.fin-onglets a,
+.fin-barre-bas a,
+.fin-type b,
+.fin-tag,
+.fin-avatar,
+.fin-table th,
+.fin-circuit span {
+  font-family: var(--f-titres), var(--f-texte), sans-serif;
+}
+.fin h1 {
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+.fin h2 {
+  font-weight: 700;
+}
+.fin-stat .n,
+.fin-montant {
+  font-weight: 800;
+}
+.fin-input,
+.fin-table td {
+  font-family: var(--f-texte), sans-serif;
+}
+.fin-footer-vh {
+  font-family: var(--f-signature), cursive;
+  font-size: 18px;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Choix « Dessiner / Écrire mes initiales » */
+.fin-segments {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: var(--fin-fond);
+  border: 1px solid var(--fin-trait);
+}
+.fin-segments button {
+  border: none;
+  background: transparent;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-family: var(--f-titres), sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fin-gris);
+}
+.fin-segments button.actif {
+  background: #fff;
+  color: var(--fin-primaire-fonce);
+  box-shadow: 0 2px 8px -4px rgba(20, 33, 31, 0.35);
+}
+.fin-signature.ecrite canvas {
+  cursor: default;
 }

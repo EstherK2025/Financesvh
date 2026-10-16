@@ -130,8 +130,10 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
 - Factures stockées en base, visibles uniquement par le demandeur, son
   approbateur et les finances. Pages non indexées par les moteurs de recherche.
 
-## Couleurs, logo et navigation
+## Couleurs, logo, polices et navigation
 
+- **Polices** : Montserrat (titres, chiffres, boutons) et Manrope (texte),
+  comme Rapports VH ; Great Vibes pour les signatures écrites.
 - **Logo** : le logo complet Vases d'Honneur (`public/vh-logo.png`) en haut de
   chaque page, sur les pages de connexion et sur les fiches PDF. Le super
   administrateur peut le remplacer dans **Réglages** (meilleure qualité).
@@ -144,8 +146,9 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
 
 ## Signatures
 
-Approuver une demande = **signer** dans le cadre prévu (doigt, stylet ou
-souris), pour le ministère (1re approbation) comme pour les finances. La
+Approuver une demande = **signer**, pour le ministère (1re approbation) comme
+pour les finances : soit en **dessinant** la signature (doigt, stylet ou
+souris), soit en **écrivant ses initiales**, rendues en écriture manuscrite. La
 signature, le **nom**, la **fonction** et la **date** apparaissent
 automatiquement dans l'historique et dans le bloc « Signatures » de la fiche
 PDF.
