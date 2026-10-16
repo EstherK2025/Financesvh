@@ -30,17 +30,17 @@ button {
 /* ═══════════════════════════════════════════════════════════
    DÉPARTEMENT DES FINANCES
    Thème sobre : blanc · texte noir, aux couleurs de Vases d'Honneur
-   (vert, or, orange du logo).
+   (vert, or, rouge du logo).
    👉 COULEURS VH : modifier uniquement les 3 variables --fin-primaire,
       --fin-accent et --fin-accent-fonce ci-dessous.
    ═══════════════════════════════════════════════════════════ */
 
 .fin {
-  /* Couleurs Vases d'Honneur — tirées du logo (public/vh-logo.png). */
-  --fin-primaire: #006c67; /* vert VH : barre du haut, boutons principaux */
-  --fin-accent: #ceae1d; /* or VH : liseré, bouton « payer », mises en avant */
-  --fin-accent-fonce: #8a740f;
-  --fin-orange: #ec8002; /* orange VH */
+  /* Couleurs Vases d'Honneur — tirées du logo officiel (public/vh-logo.png). */
+  --fin-primaire: #2d6a66; /* vert VH : barre du haut, boutons principaux */
+  --fin-accent: #ccb042; /* or VH : liseré, bouton « payer », mises en avant */
+  --fin-accent-fonce: #8f7a22;
+  --fin-orange: #ae302f; /* rouge VH (soulignement du logo) : alertes, « à traiter » */
   --fin-encre: #111;
   --fin-gris: #6b6b6b;
   --fin-trait: #e4e4e4;
@@ -367,7 +367,7 @@ textarea.fin-input {
 }
 .fin-stat.accent {
   border-color: var(--fin-orange);
-  background: #fff5e8;
+  background: #fbeeee;
 }
 
 /* Tableaux */
@@ -627,4 +627,13 @@ textarea.fin-input {
   padding: 14px;
   margin-bottom: 14px;
   user-select: all;
+}
+
+/* Logo complet en tête des pages de connexion */
+.fin-logo-complet {
+  display: block;
+  width: 220px;
+  max-width: 70%;
+  height: auto;
+  margin: 8px auto 22px;
 }

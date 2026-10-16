@@ -1,9 +1,10 @@
 import { logo } from "@/lib/fin-reglages";
 
-// Logo téléversé par le super administrateur (404 sinon → sigle « VH »).
-export async function GET() {
+// Logo de la barre du haut : celui téléversé par le super administrateur,
+// sinon le monogramme VH fourni (public/vh-symbole.png).
+export async function GET(req: Request) {
   const l = await logo();
-  if (!l?.donnees) return new Response("Aucun logo.", { status: 404 });
+  if (!l?.donnees) return Response.redirect(new URL("/vh-symbole.png", req.url), 302);
   return new Response(Buffer.from(l.donnees), {
     headers: {
       "Content-Type": l.typeMime || "image/png",

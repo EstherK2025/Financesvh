@@ -96,12 +96,13 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
 
 ## Couleurs et logo Vases d'Honneur
 
-- **Couleurs** (tirées du logo de l'Assemblée Havre de Paix — à ajuster si
-  celles de Vases d'Honneur diffèrent) : vert `#006c67`, or `#ceae1d`, orange `#ec8002`
+- **Logo** : `public/vh-logo.png` (logo complet, pages de connexion) et
+  `public/vh-symbole.png` (monogramme « VH », barre du haut et icône d'onglet).
+  Le super administrateur peut remplacer le logo de la barre du haut dans
+  **Réglages**.
+- **Couleurs** (tirées du logo) : vert `#2d6a66`, or `#ccb042`, rouge `#ae302f`
   — variables `--fin-primaire`, `--fin-accent`, `--fin-orange` en haut du bloc
   « DÉPARTEMENT DES FINANCES » de `app/globals.css`.
-- **Logo** : le super administrateur téléverse le logo Vases d'Honneur dans
-  **Réglages** (PNG, JPG, WebP ou SVG). Sans logo, le sigle « VH » s'affiche.
 
 ---
 
