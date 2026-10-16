@@ -22,8 +22,10 @@ export default async function ActiverPage({ params }: { params: Promise<{ jeton:
   return (
     <div className="fin-etroit">
       <h1>{u.motDePasse ? "Nouveau mot de passe" : `Bienvenue ${u.prenom} !`}</h1>
-      <p className="sous">Choisissez un mot de passe sécurisé pour {u.courriel}.</p>
-      <ActiverForm jeton={jeton} />
+      <p className="sous">
+        Compte <b>{u.identifiant || u.courriel}</b> — choisissez un mot de passe sécurisé.
+      </p>
+      <ActiverForm jeton={jeton} demanderCourriel={!u.courriel} />
     </div>
   );
 }

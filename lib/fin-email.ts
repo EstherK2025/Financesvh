@@ -83,8 +83,9 @@ export async function courrielCode(to: string, prenom: string, code: string) {
   );
 }
 
-export async function courrielInvitation(to: string, prenom: string, jeton: string, reinitialisation = false) {
+export async function courrielInvitation(to: string | null, prenom: string, jeton: string, reinitialisation = false) {
   const url = lienFinances(`/activer/${jeton}`);
+  if (!to) return; // pas encore de courriel : le lien est transmis à la main
   if (!process.env.RESEND_API_KEY) console.log(`🔗 [SIMULATION] Lien ${reinitialisation ? "de réinitialisation" : "d'activation"} pour ${to} : ${url}`);
   await envoyerSur(
     to,
@@ -102,7 +103,8 @@ export async function courrielInvitation(to: string, prenom: string, jeton: stri
 }
 
 // À l'approbateur : une demande attend sa décision.
-export async function courrielAApprouver(to: string, prenom: string, d: DemandeCourriel) {
+export async function courrielAApprouver(to: string | null, prenom: string, d: DemandeCourriel) {
+  if (!to) return;
   await envoyerSur(
     to,
     `À approuver : ${reference(d.numero)} — ${formatMontant(d.montant)}`,
@@ -115,7 +117,8 @@ export async function courrielAApprouver(to: string, prenom: string, d: DemandeC
 }
 
 // Au demandeur : sa demande a avancé, a été refusée ou payée.
-export async function courrielSuivi(to: string, prenom: string, d: DemandeCourriel, message: string, motif?: string) {
+export async function courrielSuivi(to: string | null, prenom: string, d: DemandeCourriel, message: string, motif?: string) {
+  if (!to) return;
   await envoyerSur(
     to,
     `${reference(d.numero)} — ${STATUTS[d.statut as Statut] || d.statut}`,

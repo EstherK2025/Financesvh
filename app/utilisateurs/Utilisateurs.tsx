@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { ORGANIGRAMME } from "@/lib/organigramme";
 import { appeler } from "../components/api";
+
+// Ordre d'affichage : celui de l'organigramme, puis les autres par ordre alphabétique.
+const rang = (identifiant: string) => {
+  const i = ORGANIGRAMME.findIndex((m) => m.identifiant === identifiant || m.departements.some((d) => d.identifiant === identifiant));
+  if (i < 0) return 1e6;
+  const j = ORGANIGRAMME[i].departements.findIndex((d) => d.identifiant === identifiant);
+  return i * 100 + j;
+};
+const trier = (a: LigneUtilisateur, b: LigneUtilisateur) => rang(a.identifiant) - rang(b.identifiant) || `${a.prenom} ${a.nom}`.localeCompare(`${b.prenom} ${b.nom}`, "fr");
 
 export type LigneUtilisateur = {
   id: string;
@@ -21,14 +31,17 @@ export type LigneUtilisateur = {
 type Nouveau = { role: string; ministere: string; departement: string; leaderId: string; prenom: string; nom: string; identifiant: string; courriel: string };
 const vide = (role: string, leaderId = ""): Nouveau => ({ role, ministere: "", departement: "", leaderId, prenom: "", nom: "", identifiant: "", courriel: "" });
 
-export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisateur[]; moiId: string }) {
+type InfoOrganigramme = { total: number; manquants: number };
+
+export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: LigneUtilisateur[]; moiId: string; organigramme: InfoOrganigramme }) {
   const [form, setForm] = useState<Nouveau | null>(null); // formulaire d'ajout ouvert
   const [erreur, setErreur] = useState("");
-  const [lien, setLien] = useState<{ nom: string; url: string } | null>(null);
+  const [lien, setLien] = useState<{ nom: string; url: string; parCourriel: boolean } | null>(null);
+  const [info, setInfo] = useState("");
   const [charge, setCharge] = useState(false);
 
   const supers = lignes.filter((u) => u.role === "superadmin");
-  const ministeres = lignes.filter((u) => u.role === "admin").sort((a, b) => a.ministere.localeCompare(b.ministere, "fr"));
+  const ministeres = lignes.filter((u) => u.role === "admin").sort(trier);
   const sansMinistere = lignes.filter((u) => u.role === "utilisateur" && !ministeres.some((m) => m.id === u.leaderId));
 
   async function creer(e: React.FormEvent) {
@@ -39,7 +52,7 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
     const r = await appeler<{ lien: string }>("/api/utilisateurs", { json: form });
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
-    setLien({ nom: `${form.prenom} ${form.nom}`, url: r.data.lien });
+    setLien({ nom: `${form.prenom} ${form.nom}`, url: r.data.lien, parCourriel: Boolean(form.courriel) });
     setForm(null);
     setTimeout(() => window.location.reload(), 50);
   }
@@ -55,7 +68,23 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
     setErreur("");
     const r = await appeler<{ lien: string }>(`/api/utilisateurs/${u.id}`, { method: "POST" });
     if (!r.ok) return setErreur(r.erreur);
-    setLien({ nom: `${u.prenom} ${u.nom}`, url: r.data.lien });
+    setLien({ nom: `${u.prenom} ${u.nom}`, url: r.data.lien, parCourriel: Boolean(u.courriel) });
+    try {
+      await navigator.clipboard.writeText(r.data.lien);
+      setInfo("Lien copié : collez-le dans WhatsApp ou un SMS.");
+    } catch {
+      setInfo("");
+    }
+  }
+
+  async function chargerOrganigramme() {
+    if (!confirm(`Créer les ${organigramme.manquants} comptes manquants de l'organigramme (ministères et départements) ?`)) return;
+    setErreur("");
+    setCharge(true);
+    const r = await appeler<{ crees: number }>("/api/utilisateurs/organigramme");
+    setCharge(false);
+    if (!r.ok) return setErreur(r.erreur);
+    window.location.reload();
   }
 
   function renommer(u: LigneUtilisateur, champ: "ministere" | "departement") {
@@ -100,8 +129,9 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
             />
           </label>
           <label className="fin-champ">
-            <span>Courriel (reçoit le code de connexion)</span>
-            <input className="fin-input" type="email" required value={form.courriel} onChange={(e) => setForm({ ...form, courriel: e.target.value })} />
+            <span>Courriel (facultatif)</span>
+            <input className="fin-input" type="email" value={form.courriel} onChange={(e) => setForm({ ...form, courriel: e.target.value })} />
+            <em>Sinon, la personne le saisit en activant son compte.</em>
           </label>
         </div>
         <div className="fin-actions">
@@ -124,12 +154,12 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
         </b>
         {u.id === moiId && " (moi)"}
         <div style={{ fontSize: 11, color: "var(--fin-gris)" }}>
-          {u.identifiant ? `@${u.identifiant} · ` : ""}
-          {u.courriel}
+          {u.identifiant ? `@${u.identifiant}` : ""}
+          {u.courriel ? ` · ${u.courriel}` : ""}
         </div>
       </td>
       <td style={{ whiteSpace: "nowrap", fontSize: 12 }}>
-        {!u.actif ? "Désactivé" : u.active ? `Actif${u.derniereConnexion ? ` · vu le ${u.derniereConnexion}` : ""}` : "Invitation envoyée"}
+        {!u.actif ? "Désactivé" : u.active ? `Actif${u.derniereConnexion ? ` · vu le ${u.derniereConnexion}` : ""}` : "À activer"}
       </td>
       <td>
         <div className="fin-actions" style={{ justifyContent: "flex-end" }}>
@@ -161,7 +191,7 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
           )}
           {u.actif && (
             <button className="fin-btn blanc petit" onClick={() => inviter(u)}>
-              {u.active ? "Lien mot de passe" : "Renvoyer l'invitation"}
+              {u.active ? "Lien mot de passe" : "Lien d'activation"}
             </button>
           )}
           {u.id !== moiId && (
@@ -187,8 +217,30 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
       {erreur && <div className="fin-erreur">{erreur}</div>}
       {lien && (
         <div className="fin-succes">
-          Lien envoyé par courriel à <b>{lien.nom}</b>. Vous pouvez aussi le lui transmettre directement :<br />
+          {lien.parCourriel ? (
+            <>
+              Lien envoyé par courriel à <b>{lien.nom}</b>. Vous pouvez aussi le lui transmettre directement :
+            </>
+          ) : (
+            <>
+              Lien d&apos;activation de <b>{lien.nom}</b> à lui transmettre (WhatsApp, SMS…) :
+            </>
+          )}
+          <br />
           <code>{lien.url}</code>
+          {info && <div style={{ marginTop: 6, fontWeight: 700 }}>{info}</div>}
+        </div>
+      )}
+
+      {organigramme.manquants > 0 && (
+        <div className="fin-note" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <span>
+            <b>Organigramme VH</b> : {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer (8
+            ministères, leurs départements).
+          </span>
+          <button className="fin-btn accent petit" disabled={charge} onClick={chargerOrganigramme}>
+            {charge ? "…" : "Créer les comptes de l'organigramme"}
+          </button>
         </div>
       )}
 
@@ -202,7 +254,7 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
       {ministeres.length === 0 && <div className="fin-vide" style={{ marginTop: 14 }}>Aucun ministère pour l&apos;instant.</div>}
 
       {ministeres.map((m) => {
-        const deps = lignes.filter((u) => u.role === "utilisateur" && u.leaderId === m.id);
+        const deps = lignes.filter((u) => u.role === "utilisateur" && u.leaderId === m.id).sort(trier);
         return (
           <section key={m.id} className="fin-ministere">
             <h2>
@@ -210,7 +262,7 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
             </h2>
             {tableau([
               ligne(m, <span className="fin-tag s-approuvee" style={{ marginRight: 8 }}>Administrateur</span>),
-              ...deps.map((d) => ligne(d, <span className="fin-tag s-annulee" style={{ marginRight: 8 }}>{d.departement || "Département"}</span>)),
+              ...deps.map((d) => ligne(d, null)),
             ])}
             <button className="fin-btn blanc petit" style={{ marginTop: 8 }} onClick={() => setForm(vide("utilisateur", m.id))}>
               + Ajouter un département

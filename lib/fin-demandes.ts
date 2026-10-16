@@ -80,7 +80,7 @@ export async function notifier(demandeId: string, motif?: string) {
       });
       await Promise.all(finances.map((f) => courrielAApprouver(f.courriel, f.prenom, info)));
       if (d.approbateurId)
-        await courrielSuivi(dem.courriel, dem.prenom, info, "Votre leader a approuvé votre demande. Elle est maintenant entre les mains des finances.");
+        await courrielSuivi(dem.courriel, dem.prenom, info, "Votre ministère a approuvé votre demande. Elle est maintenant entre les mains des finances.");
       break;
     }
     case "a_reviser":

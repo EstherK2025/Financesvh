@@ -45,6 +45,30 @@ Dans **Utilisateurs**, les comptes sont rangés par ministère :
 lui est rattaché (son administrateur approuve ses demandes). Un ministère n'a
 qu'un compte administrateur. Renommer un ministère met à jour ses départements.
 
+### Organigramme VH (8 ministères, 48 départements)
+
+La liste des ministères et départements (« Panorama des départements ») est
+dans `lib/organigramme.ts`, avec l'identifiant de chaque compte :
+
+| Ministère (identifiant) | Départements |
+| --- | --- |
+| Expansion (`min-expansion`) | Évangélisation et Encadrement, Famille d'honneur, Conquête, Cellules et Maisons d'honneur |
+| Intégration (`min-integration`) | Tribus, Amis des nouveaux, Amis de l'assemblée RAM, Intégration, Smalahs, GEM, Drive d'honneur |
+| Affermissement (`min-affermissement`) | Plume d'honneur, Interprétariat et Traduction, Académie d'honneur, Porteur de vie, Baptême, MRES |
+| Intimité (`min-intimite`) | Intercession, Sainte cène, Groupe de louange, Adoration gestuelle |
+| Famille (`min-famille`) | LEAMAN, Kanegnon, Âge d'or, Eden 1 et 2, Couples d'honneur, Enfants d'honneur, G1, BLOOM |
+| Assistance (`min-assistance`) | RESHO 121 / ELEEO / Emploi d'honneur, Cœur d'honneur / ONG pour Sauver, Médecine d'honneur |
+| Administration (`min-administration`) | Secrétariat, Finances, Patrimoine et Construction d'honneur, Moyens généraux / Cleaning, Comptage / Responsable Rapport, Com / D.TIC / Plateau Télé / Sono, Librairie et l'Atelier |
+| Cultes et programmes spéciaux (`min-cultes`) | Portiers, Protocole, Gestion des cultes, Modération des cultes, Organisation des programmes spéciaux, Décoration, Loge et soins pastoraux, Wedding Planners, Événements spéciaux |
+
+Dans **Utilisateurs**, le bouton **« Créer les comptes de l'organigramme »**
+crée d'un coup les 56 comptes (relancer ne crée que ceux qui manquent).
+Les comptes n'ont pas encore de courriel : pour chacun, cliquer **« Lien
+d'activation »** (le lien est copié) et l'envoyer par WhatsApp ou SMS. La
+personne choisit son mot de passe et **saisit son courriel**, qui recevra
+ensuite ses codes de connexion. Identifiants des départements : voir
+`lib/organigramme.ts` (ex. `tribus`, `louange`, `finances`).
+
 > Avec un seul super administrateur, ses propres demandes ne peuvent pas être
 > approuvées aux finances (personne n'approuve sa propre demande) : ajouter un
 > second super administrateur le moment venu.

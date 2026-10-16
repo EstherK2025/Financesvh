@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   if (!motDePasse) return refus;
 
   const u = await trouverCompte(b.identifiant ?? b.courriel);
-  if (!u || !u.actif || !u.motDePasse) return refus;
+  if (!u || !u.actif || !u.motDePasse || !u.courriel) return refus;
   if (u.verrouJusqua && u.verrouJusqua > new Date()) {
     const min = Math.ceil((u.verrouJusqua.getTime() - Date.now()) / 60000);
     return NextResponse.json({ error: `Compte verrouillé après plusieurs essais. Réessayez dans ${min} min.` }, { status: 429 });

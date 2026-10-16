@@ -26,7 +26,7 @@ model FinUtilisateur {
   prenom       String
   nom          String
   identifiant  String?  @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules
-  courriel     String   @unique // en minuscules — reçoit le code de connexion
+  courriel     String?  @unique // en minuscules — reçoit le code de connexion ; peut être saisi par la personne à l'activation
   role         String   @default("utilisateur") // "utilisateur" | "admin" | "superadmin"
   ministere    String? // ministère du compte (admin : le sien ; utilisateur : celui de son administrateur)
   departement  String? // département (comptes utilisateur)

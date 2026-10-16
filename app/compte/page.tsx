@@ -19,7 +19,7 @@ export default async function ComptePage() {
           <dt>Identifiant</dt>
           <dd>{moi.identifiant || "—"}</dd>
           <dt>Courriel</dt>
-          <dd>{moi.courriel}</dd>
+          <dd>{moi.courriel || "—"}</dd>
           <dt>Niveau</dt>
           <dd>{ROLES[moi.role]}</dd>
           {moi.role !== "superadmin" && (

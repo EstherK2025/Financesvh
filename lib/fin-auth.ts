@@ -5,7 +5,7 @@ import type { Role } from "./finances";
 
 // ───────────────────────────────────────────────────────────
 // Authentification de la plateforme Finances :
-//   1) courriel + mot de passe (hash scrypt, verrouillage après 5 échecs)
+//   1) identifiant (ou courriel) + mot de passe (hash scrypt, verrouillage après 5 échecs)
 //   2) code à 6 chiffres envoyé par courriel (double authentification)
 //   → session nominative (cookie httpOnly, jeton aléatoire haché en base).
 // ───────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export type UtilisateurCourant = {
   prenom: string;
   nom: string;
   identifiant: string | null;
-  courriel: string;
+  courriel: string | null;
   role: Role;
   leaderId: string | null;
   ministere: string | null;

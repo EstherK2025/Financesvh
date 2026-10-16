@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { exigerUtilisateur } from "../components/garde";
+import { NB_DEPARTEMENTS, ORGANIGRAMME } from "@/lib/organigramme";
 import Utilisateurs, { type LigneUtilisateur } from "./Utilisateurs";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function UtilisateursPage() {
     prenom: u.prenom,
     nom: u.nom,
     identifiant: u.identifiant || "",
-    courriel: u.courriel,
+    courriel: u.courriel || "",
     role: u.role,
     ministere: u.ministere || "",
     departement: u.departement || "",
@@ -30,7 +31,17 @@ export default async function UtilisateursPage() {
         <b>Administrateur</b> = un ministère (approuve en premier les demandes de ses départements) · <b>Utilisateur</b> = un
         département (fait les demandes) · <b>Super administrateur</b> = finances et gestion des comptes.
       </p>
-      <Utilisateurs lignes={lignes} moiId={moi.id} />
+      <Utilisateurs
+        lignes={lignes}
+        moiId={moi.id}
+        organigramme={{
+          total: ORGANIGRAMME.length + NB_DEPARTEMENTS,
+          manquants:
+            ORGANIGRAMME.length +
+            NB_DEPARTEMENTS -
+            lignes.filter((l) => ORGANIGRAMME.some((m) => m.identifiant === l.identifiant || m.departements.some((d) => d.identifiant === l.identifiant))).length,
+        }}
+      />
     </>
   );
 }
