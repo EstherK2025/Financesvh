@@ -21,6 +21,9 @@ datasource db {
 
 // Compte utilisateur. 3 niveaux (comme Rapports VH) :
 //   "utilisateur" (un département) | "admin" (un ministère) | "superadmin".
+// + « delegue » : UN compte partagé d'approbateur externe (identifiant et mot
+//   de passe fixes) ; à chaque décision, la personne saisit son nom, sa
+//   fonction, sa signature et la justification.
 model FinUtilisateur {
   id           String   @id @default(cuid())
   titre        String? // GA, AP, PA, AE, AM, Responsable (affiché devant le nom)
@@ -130,8 +133,14 @@ model FinHistorique {
   demande   FinDemande     @relation(fields: [demandeId], references: [id], onDelete: Cascade)
   auteurId  String?
   auteur    FinUtilisateur? @relation(fields: [auteurId], references: [id], onDelete: SetNull)
-  action    String // "soumise" | "approuvee_leader" | "approuvee_finances" | "refusee" | "resoumise" | "annulee" | "payee"
+  action    String // "soumise" | "approuvee_leader" | "approuvee_finances" | "refusee" | "resoumise" | "annulee" | "payee" | "attribuee"
   commentaire String?
+  // Signature à l'approbation (image PNG en data URL) et identité du signataire
+  // (pour l'approbateur externe : nom, fonction et justification saisis).
+  signature          String?
+  signataireNom      String?
+  signataireFonction String?
+  justification      String?
   createdAt DateTime       @default(now())
 
   @@index([demandeId])

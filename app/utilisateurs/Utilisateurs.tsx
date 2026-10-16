@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { ROLES } from "@/lib/finances";
+import { ROLES_COMPTES as ROLES } from "@/lib/finances";
 import { ORGANIGRAMME } from "@/lib/organigramme";
 import { appeler } from "../components/api";
 import ChampTitre from "../components/ChampTitre";
@@ -88,10 +88,12 @@ export default function Utilisateurs({
   lignes,
   moiId,
   organigramme,
+  titres,
 }: {
   lignes: LigneUtilisateur[];
   moiId: string;
   organigramme: InfoOrganigramme;
+  titres: string[];
 }) {
   // Formulaire ouvert : création (id = "nouveau") ou modification d'un compte.
   const [form, setForm] = useState<{ id: string; champs: Champs } | null>(null);
@@ -225,7 +227,7 @@ export default function Utilisateurs({
             </label>
           </div>
         )}
-        <ChampTitre valeur={c.titre} onChange={(v) => maj("titre", v)} />
+        <ChampTitre valeur={c.titre} onChange={(v) => maj("titre", v)} titres={titres} />
         <div className="fin-grille2">
           <label className="fin-champ">
             <span>Prénom de la personne</span>

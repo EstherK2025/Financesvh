@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { titreValide } from "@/lib/fin-reglages";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, fermerSessionsDe, utilisateurCourant } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { ROLES, nomUtilisateur, normaliserIdentifiant, problemeIdentifiant, titreValide } from "@/lib/finances";
+import { ROLES_COMPTES as ROLES, nomUtilisateur, normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
 import { organisationDe } from "@/lib/fin-comptes";
 
 // Modifier un compte (super admin) :
@@ -16,7 +17,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const b = await req.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
 
-  if (b.titre !== undefined) data.titre = titreValide(b.titre);
+  if (b.titre !== undefined) data.titre = await titreValide(b.titre);
   // Nom de la personne : modifiable, ou vidé (elle le ressaisira).
   if (b.prenom !== undefined) data.prenom = String(b.prenom).trim().replace(/\s+/g, " ").slice(0, 80);
   if (b.nom !== undefined) data.nom = String(b.nom).trim().replace(/\s+/g, " ").slice(0, 80);

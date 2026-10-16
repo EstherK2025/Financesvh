@@ -9,7 +9,9 @@ type Props = { utilisateur: { nom: string; role: Role } | null };
 
 export default function FinNav({ utilisateur }: Props) {
   const path = usePathname();
-  const liens = utilisateur
+  const liens = utilisateur?.role === "delegue"
+    ? [{ href: "/", label: "Demandes à approuver" }]
+    : utilisateur
     ? [
         { href: "/", label: "Tableau de bord" },
         { href: "/nouvelle", label: "Nouvelle demande" },

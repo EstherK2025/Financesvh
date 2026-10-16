@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { egalConstant, ouvrirPremiere, trouverCompte, verifierMotDePasse, MAX_ECHECS, DUREE_VERROU_MS } from "@/lib/fin-auth";
 import { suiteApresMotDePasse } from "@/lib/fin-connexion";
-import { mdpTemporaire } from "@/lib/fin-reglages";
+import { mdpTemporaire, titres } from "@/lib/fin-reglages";
 import { libelleCompte } from "@/lib/finances";
 
 // Étape 1 : identifiant (ou courriel) + mot de passe.
@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       etape: "premiere",
       compte: libelleCompte(u),
       titre: u.titre || "",
+      titres: await titres(),
       prenom: u.prenom,
       nom: u.nom,
     });

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ROLES, libelleOrg, nomUtilisateur } from "@/lib/finances";
 import { exigerUtilisateur } from "../components/garde";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ComptePage() {
   const moi = await exigerUtilisateur();
+  if (moi.role === "delegue") redirect("/");
   const tot = (await prisma.finUtilisateur.findUnique({ where: { id: moi.id }, select: { totpActif: true } }))?.totpActif;
   const leader = moi.leaderId ? await prisma.finUtilisateur.findUnique({ where: { id: moi.leaderId } }) : null;
   return (

@@ -10,6 +10,7 @@ const avecDemandeur = { demandeur: { select: { titre: true, prenom: true, nom: t
 
 export default async function TableauDeBord() {
   const moi = await exigerUtilisateur();
+  if (moi.role === "delegue") return <TableauExterne id={moi.id} />;
   const finances = moi.role === "superadmin";
   const estLeader = moi.role !== "utilisateur";
 
@@ -126,6 +127,36 @@ export default async function TableauDeBord() {
         <>
           <h2>Autres demandes {moi.ministere ? `du ministère ${moi.ministere}` : "que j'ai approuvées"}</h2>
           <DemandeListe demandes={equipe} avecDemandeur vide="" />
+        </>
+      )}
+    </>
+  );
+}
+
+// Compte partagé d'approbateur externe : uniquement les demandes qui lui sont attribuées.
+async function TableauExterne({ id }: { id: string }) {
+  const [aTraiter, traitees] = await Promise.all([
+    prisma.finDemande.findMany({ where: { approbateurId: id, statut: "attente_leader" }, orderBy: { createdAt: "asc" }, include: avecDemandeur }),
+    prisma.finDemande.findMany({
+      where: { approbateurId: id, statut: { not: "attente_leader" } },
+      orderBy: { updatedAt: "desc" },
+      take: 30,
+      include: avecDemandeur,
+    }),
+  ]);
+  return (
+    <>
+      <h1>Approbateur externe</h1>
+      <p className="sous">
+        Compte partagé. Ouvrez une demande : avant de décider, vous indiquerez votre nom complet, votre fonction dans l&apos;église, votre
+        signature et pourquoi c&apos;est vous qui l&apos;approuvez.
+      </p>
+      <h2>Demandes qui vous sont attribuées ({aTraiter.length})</h2>
+      <DemandeListe demandes={aTraiter} avecDemandeur vide="Aucune demande en attente." />
+      {traitees.length > 0 && (
+        <>
+          <h2>Déjà traitées</h2>
+          <DemandeListe demandes={traitees} avecDemandeur vide="" />
         </>
       )}
     </>

@@ -8,7 +8,7 @@ import { courrielInvitation } from "@/lib/fin-email";
 export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const u = await trouverCompte(b.identifiant ?? b.courriel);
-  if (u?.actif) {
+  if (u?.actif && u.role !== "delegue") {
     const jeton = await creerJetonCompte(u.id, 1);
     await courrielInvitation(u.courriel, nomUtilisateur(u), jeton, true);
   }

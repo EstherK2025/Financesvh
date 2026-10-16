@@ -8,7 +8,7 @@ import ChampTitre from "../components/ChampTitre";
 import { ChampsMotDePasse } from "../activer/[jeton]/ActiverForm";
 
 type Etape = "mdp" | "premiere" | "enrolement" | "code";
-type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; compte?: string; titre?: string; prenom?: string; nom?: string };
+type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; compte?: string; titre?: string; titres?: string[]; prenom?: string; nom?: string };
 
 // Connexion : identifiant + mot de passe, puis (si la double authentification
 // est activée) code de l'application Authenticator.
@@ -20,6 +20,7 @@ export default function ConnexionForm() {
   const [mdp, setMdp] = useState("");
   const [compte, setCompte] = useState("");
   const [titre, setTitre] = useState("");
+  const [listeTitres, setListeTitres] = useState<string[]>([]);
   const [prenom, setPrenom] = useState("");
   const [nomFamille, setNomFamille] = useState("");
   const [nouveau, setNouveau] = useState("");
@@ -39,6 +40,7 @@ export default function ConnexionForm() {
     if (s.etape === "premiere") {
       setCompte(s.compte || "");
       setTitre(s.titre || "");
+      setListeTitres(s.titres || []);
       setPrenom(s.prenom || "");
       setNomFamille(s.nom || "");
     }
@@ -124,7 +126,7 @@ export default function ConnexionForm() {
           compte) et créez votre propre mot de passe. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
-        <ChampTitre valeur={titre} onChange={setTitre} />
+        <ChampTitre valeur={titre} onChange={setTitre} titres={listeTitres} />
         <div className="fin-grille2">
           <label className="fin-champ">
             <span>Prénom</span>

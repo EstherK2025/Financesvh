@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { comptePremiere, egalConstant, fermerPremiere, hacherMotDePasse } from "@/lib/fin-auth";
 import { suiteApresMotDePasse } from "@/lib/fin-connexion";
-import { mdpTemporaire } from "@/lib/fin-reglages";
-import { problemeMotDePasse, titreValide } from "@/lib/finances";
+import { mdpTemporaire, titreValide } from "@/lib/fin-reglages";
+import { problemeMotDePasse } from "@/lib/finances";
 
 // Première connexion : la personne indique son prénom et son nom (responsable
 // du ministère / département) et crée SON mot de passe, puis est connectée
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   const maj = await prisma.finUtilisateur.update({
     where: { id: u.id },
-    data: { titre: titreValide(b.titre), prenom, nom, motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
+    data: { titre: await titreValide(b.titre), prenom, nom, motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
   });
   await fermerPremiere();
   return NextResponse.json(await suiteApresMotDePasse(maj));

@@ -2,6 +2,7 @@ import { FIN } from "@/lib/finances";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import InstallationForm from "./InstallationForm";
+import { titres } from "@/lib/fin-reglages";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function InstallationPage() {
       <img src={FIN.logoComplet} alt="Vases d'Honneur" className="fin-logo-complet" />
       <h1>Installation</h1>
       <p className="sous">Créez le premier compte super admin (GA Maïté). Il crée ensuite tous les autres comptes.</p>
-      <InstallationForm />
+      <InstallationForm titres={await titres()} />
     </div>
   );
 }

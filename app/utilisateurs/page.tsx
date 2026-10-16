@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { exigerUtilisateur } from "../components/garde";
 import { NB_DEPARTEMENTS, ORGANIGRAMME } from "@/lib/organigramme";
-import { mdpTemporaire } from "@/lib/fin-reglages";
+import { mdpTemporaire, titres } from "@/lib/fin-reglages";
 import Link from "next/link";
 import Utilisateurs, { type LigneUtilisateur } from "./Utilisateurs";
 
@@ -47,6 +47,7 @@ export default async function UtilisateursPage() {
       <Utilisateurs
         lignes={lignes}
         moiId={moi.id}
+        titres={await titres()}
         organigramme={{
           total: ORGANIGRAMME.length + NB_DEPARTEMENTS,
           manquants:

@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { utilisateurCourant } from "@/lib/fin-auth";
-import { changerDoubleAuth, changerMdpTemporaire } from "@/lib/fin-reglages";
+import { changerDoubleAuth, changerMdpTemporaire, changerTitres } from "@/lib/fin-reglages";
 
-// Réglages (super administrateur) : { mdpTemporaire? } ou { doubleAuth? }.
+// Réglages (super administrateur) : { mdpTemporaire? } ou { doubleAuth? } ou { titres? }.
 export async function POST(req: Request) {
   const moi = await utilisateurCourant();
   if (moi?.role !== "superadmin") return NextResponse.json({ error: "Réservé au super administrateur." }, { status: 403 });
   const b = await req.json().catch(() => ({}));
+  if (Array.isArray(b.titres)) {
+    const liste = [...new Set(b.titres.map((t: unknown) => String(t ?? "").trim().replace(/\s+/g, " ").slice(0, 30)).filter(Boolean))] as string[];
+    if (liste.length === 0 || liste.length > 30) return NextResponse.json({ error: "Indiquez entre 1 et 30 titres." }, { status: 400 });
+    await changerTitres(liste);
+    return NextResponse.json({ ok: true, titres: liste });
+  }
   if (typeof b.doubleAuth === "boolean") {
     await changerDoubleAuth(b.doubleAuth);
     return NextResponse.json({ ok: true });

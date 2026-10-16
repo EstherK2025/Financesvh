@@ -18,11 +18,18 @@ export const FIN = {
 // Premier compte super admin, proposé à l'installation (crée ensuite les autres).
 export const PREMIER_ADMIN = { titre: "GA", prenom: "Maïté", nom: "", identifiant: "estherk" } as const;
 
-// Titres possibles d'une personne (affichés devant son nom : « GA John Doe »).
-export const TITRES = ["GA", "AP", "PA", "AE", "AM", "Responsable"] as const;
-export function titreValide(t: unknown): string | null {
+// Titres par défaut d'une personne (affichés devant son nom : « GA John Doe »).
+// La liste se modifie dans Réglages (super administrateur) : voir lib/fin-reglages.ts.
+export const TITRES_DEFAUT = ["GA", "AP", "PA", "AE", "AM", "Responsable"];
+export function titreDans(liste: string[], t: unknown): string | null {
   const v = String(t ?? "").trim();
-  return (TITRES as readonly string[]).includes(v) ? v : null;
+  return liste.includes(v) ? v : null;
+}
+
+// Signature dessinée : image PNG en data URL, taille raisonnable.
+export function signatureValide(s: unknown): string | null {
+  const v = String(s ?? "");
+  return /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(v) && v.length > 200 && v.length < 400_000 ? v : null;
 }
 
 // Courriel des comptes : identifiant@evhnb.ca
@@ -68,7 +75,10 @@ export const ROLES = {
   utilisateur: "Utilisateur (département)",
   admin: "Administrateur (ministère)",
   superadmin: "Super administrateur",
+  delegue: "Approbateur externe (compte partagé)",
 } as const;
+// Niveaux attribuables depuis « Utilisateurs » (l'approbateur externe se gère dans Réglages).
+export const ROLES_COMPTES = { utilisateur: ROLES.utilisateur, admin: ROLES.admin, superadmin: ROLES.superadmin } as const;
 export type Role = keyof typeof ROLES;
 
 export const STATUTS = {
@@ -89,7 +99,14 @@ export const ACTIONS_HISTO: Record<string, string> = {
   refusee: "Refusée — renvoyée pour révision",
   annulee: "Annulée par le demandeur",
   payee: "Paiement effectué",
+  attribuee: "1re approbation réattribuée",
 };
+
+// Libellé d'une étape de l'historique (précise l'approbateur externe).
+export function libelleAction(h: { action: string; auteur?: { role: string } | null }): string {
+  if (h.action === "approuvee_leader" && h.auteur?.role === "delegue") return "Approuvée par l'approbateur externe";
+  return ACTIONS_HISTO[h.action] || h.action;
+}
 
 // Pièces jointes : la limite des fonctions Vercel est ~4,5 Mo par requête.
 // Les photos sont compressées dans le navigateur avant l'envoi.
@@ -158,5 +175,6 @@ export function libelleCompte(u: { role: string; ministere?: string | null; depa
   if (u.role === "admin" && u.ministere) return `Ministère ${u.ministere}`;
   if (u.departement) return `Département ${u.departement}${u.ministere ? ` (ministère ${u.ministere})` : ""}`;
   if (u.role === "superadmin") return "Super administrateur";
+  if (u.role === "delegue") return "Approbateur externe";
   return u.identifiant || "Compte";
 }

@@ -5,7 +5,7 @@ import { PREMIER_ADMIN } from "@/lib/finances";
 import { appeler } from "../components/api";
 import ChampTitre from "../components/ChampTitre";
 
-export default function InstallationForm() {
+export default function InstallationForm({ titres }: { titres: string[] }) {
   const [f, setF] = useState({ motDePasseInstallation: "", ...PREMIER_ADMIN, courriel: "" } as Record<string, string>);
   const [erreur, setErreur] = useState("");
   const [lien, setLien] = useState("");
@@ -41,7 +41,7 @@ export default function InstallationForm() {
         <input className="fin-input" type="password" required value={f.motDePasseInstallation} onChange={maj("motDePasseInstallation")} />
         <em>Valeur de la variable FIN_SETUP_PASSWORD (réglée dans Vercel).</em>
       </label>
-      <ChampTitre valeur={f.titre} onChange={(v) => setF({ ...f, titre: v })} />
+      <ChampTitre valeur={f.titre} onChange={(v) => setF({ ...f, titre: v })} titres={titres} />
       <div className="fin-grille2">
         <label className="fin-champ">
           <span>Prénom</span>

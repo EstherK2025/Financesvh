@@ -8,6 +8,7 @@ import { lireChamps, lireFichiers } from "@/lib/fin-formulaire";
 export async function POST(req: Request) {
   const moi = await utilisateurCourant();
   if (!moi) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  if (moi.role === "delegue") return NextResponse.json({ error: "Ce compte sert uniquement à approuver." }, { status: 403 });
 
   const fd = await req.formData().catch(() => null);
   if (!fd) return NextResponse.json({ error: "Formulaire invalide (fichiers trop lourds ?)." }, { status: 400 });

@@ -1,5 +1,5 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import { ACTIONS_HISTO, FIN, MODES_PAIEMENT, STATUTS, TYPES, formatMontant, libelleCompte, nomUtilisateur, reference, type Statut, type TypeDemande } from "./finances";
+import { FIN, libelleAction, MODES_PAIEMENT, STATUTS, TYPES, formatMontant, libelleCompte, nomUtilisateur, reference, type Statut, type TypeDemande } from "./finances";
 
 // ───────────────────────────────────────────────────────────
 // Fiche PDF d'une demande (super administrateur) : à imprimer ou à classer.
@@ -17,7 +17,7 @@ const L = 612; // format Lettre
 const H = 792;
 const MARGE = 50;
 
-type Personne = { prenom: string; nom: string; ministere?: string | null; departement?: string | null; role: string; identifiant?: string | null; courriel?: string | null };
+type Personne = { titre?: string | null; prenom: string; nom: string; ministere?: string | null; departement?: string | null; role: string; identifiant?: string | null; courriel?: string | null };
 export type DemandePdf = {
   numero: number;
   type: string;
@@ -37,7 +37,16 @@ export type DemandePdf = {
   createdAt: Date;
   demandeur: Personne;
   approbateur: Personne | null;
-  historique: { action: string; commentaire: string | null; createdAt: Date; auteur: Personne | null }[];
+  historique: {
+    action: string;
+    commentaire: string | null;
+    createdAt: Date;
+    auteur: Personne | null;
+    signature: string | null;
+    signataireNom: string | null;
+    signataireFonction: string | null;
+    justification: string | null;
+  }[];
   pieces: { nom: string; typeMime: string; donnees: Uint8Array }[];
 };
 
@@ -179,9 +188,16 @@ export async function fichePdf(d: DemandePdf, genereePar: string, logoPng: Uint8
   // ── Approbations (dernière décision de chaque étape) ──
   titre("Approbations et paiement");
   const derniere = (action: string) => [...d.historique].reverse().find((h) => h.action === action);
+  // Nom affiché du signataire : identité saisie (approbateur externe) ou compte.
+  const qui = (h: DemandePdf["historique"][number]) =>
+    h.signataireNom
+      ? `${h.signataireNom}${h.signataireFonction ? ` (${h.signataireFonction})` : ""}`
+      : h.auteur
+        ? `${nomUtilisateur(h.auteur)} (${libelleCompte(h.auteur)})`
+        : "—";
   const etape = (action: string, attente: string) => {
     const h = derniere(action);
-    return h ? `${h.auteur ? nomUtilisateur(h.auteur) : "—"}${h.auteur ? ` (${libelleCompte(h.auteur)})` : ""} - ${dateHeure(h.createdAt)}` : attente;
+    return h ? `${qui(h)} - ${dateHeure(h.createdAt)}` : attente;
   };
   champ(
     "1re approbation",
@@ -189,13 +205,17 @@ export async function fichePdf(d: DemandePdf, genereePar: string, logoPng: Uint8
   );
   champ("Finances", etape("approuvee_finances", "En attente"));
   champ("Paiement", d.payeLe ? `${etape("payee", "")}${d.referencePaiement ? ` - réf. ${d.referencePaiement}` : ""}` : "Non payée");
+  const ext = derniere("approuvee_leader");
+  if (ext?.justification) champ("Justification", ext.justification);
   if (d.statut === "a_reviser" && d.motifRefus) champ("Motif du refus", d.motifRefus);
 
   // ── Historique ──
   titre("Historique");
   for (const h of d.historique) {
-    const qui = h.auteur ? `${nomUtilisateur(h.auteur)} (${libelleCompte(h.auteur)})` : "—";
-    champ(dateHeure(h.createdAt), `${ACTIONS_HISTO[h.action] || h.action} - ${qui}${h.commentaire ? `\n« ${h.commentaire} »` : ""}`);
+    champ(
+      dateHeure(h.createdAt),
+      `${libelleAction(h)} - ${qui(h)}${h.commentaire ? `\n« ${h.commentaire} »` : ""}${h.justification ? `\nJustification : « ${h.justification} »` : ""}`,
+    );
   }
 
   // ── Pièces jointes (liste) ──
@@ -203,17 +223,42 @@ export async function fichePdf(d: DemandePdf, genereePar: string, logoPng: Uint8
   if (d.pieces.length === 0) champ("", "Aucune");
   d.pieces.forEach((p, i) => champ(`Pièce ${i + 1}`, p.nom));
 
-  // ── Signatures ──
-  // Le bloc de signatures (≈ 60 pt) reste sur la page s'il tient au-dessus du pied de page.
-  if (y - 66 < 44) nouvellePage();
-  y -= 30;
+  // ── Signatures (image, nom, fonction et date ajoutés automatiquement) ──
+  if (y - 140 < 44) nouvellePage();
+  y -= 16;
+  texte("SIGNATURES", MARGE, 9.5, fb, VERT);
+  y -= 5;
+  page.drawLine({ start: { x: MARGE, y }, end: { x: L - MARGE, y }, thickness: 0.8, color: OR });
+  y -= 12;
   const col = (L - MARGE * 2 - 30) / 2;
-  for (const [i, lib] of ["Signature - ministère", "Signature - finances"].entries()) {
+  const blocs: [string, string][] = [
+    [d.approbateur?.role === "delegue" ? "1re approbation (approbateur externe)" : "1re approbation (ministère)", "approuvee_leader"],
+    ["Finances", "approuvee_finances"],
+  ];
+  const haut = y;
+  for (const [i, [lib, action]] of blocs.entries()) {
     const x = MARGE + i * (col + 30);
-    page.drawLine({ start: { x, y }, end: { x: x + col, y }, thickness: 0.6, color: GRIS });
-    page.drawText(net(lib), { x, y: y - 12, size: 8.5, font: f, color: GRIS });
-    page.drawText("Date :", { x, y: y - 26, size: 8.5, font: f, color: GRIS });
+    const h = derniere(action);
+    page.drawText(net(lib), { x, y: haut, size: 8.5, font: fb, color: GRIS });
+    const base = haut - 78; // ligne de signature
+    if (h?.signature) {
+      try {
+        const img = await pdf.embedPng(Buffer.from(h.signature.split(",")[1], "base64"));
+        const ech = Math.min(col / img.width, 62 / img.height);
+        page.drawImage(img, { x, y: base + 4, width: img.width * ech, height: img.height * ech });
+      } catch {
+        /* signature illisible : la ligne reste vide */
+      }
+    }
+    page.drawLine({ start: { x, y: base }, end: { x: x + col, y: base }, thickness: 0.6, color: GRIS });
+    const lignesSig = h
+      ? [qui(h), `Signé le ${dateHeure(h.createdAt)}`]
+      : [d.approbateur || action === "approuvee_finances" ? "En attente de signature" : "Sans objet"];
+    lignesSig.forEach((t, k) =>
+      page.drawText(net(t).slice(0, 70), { x, y: base - 12 - k * 11, size: k === 0 ? 9 : 8, font: k === 0 ? fb : f, color: k === 0 ? NOIR : GRIS }),
+    );
   }
+  y = haut - 78 - 12 - 22;
 
   // ── Annexes : pièces jointes ──
   for (const [i, p] of d.pieces.entries()) {

@@ -1,5 +1,6 @@
 import { randomInt } from "crypto";
 import { prisma } from "./prisma";
+import { TITRES_DEFAUT, titreDans } from "./finances";
 
 // ───────────────────────────────────────────────────────────
 // Réglages modifiables depuis la plateforme (super administrateur).
@@ -37,4 +38,25 @@ export async function doubleAuthActive(): Promise<boolean> {
 export async function changerDoubleAuth(active: boolean) {
   const texte = active ? "oui" : "non";
   await prisma.finReglage.upsert({ where: { cle: "double_auth" }, create: { cle: "double_auth", texte }, update: { texte } });
+}
+
+// Liste des titres (GA, AP…) modifiable par le super administrateur.
+export async function titres(): Promise<string[]> {
+  const r = await prisma.finReglage.findUnique({ where: { cle: "titres" } });
+  try {
+    const l = JSON.parse(r?.texte || "null");
+    if (Array.isArray(l) && l.every((x) => typeof x === "string") && l.length) return l;
+  } catch {
+    /* valeur illisible : titres par défaut */
+  }
+  return [...TITRES_DEFAUT];
+}
+
+export async function changerTitres(liste: string[]) {
+  const texte = JSON.stringify(liste);
+  await prisma.finReglage.upsert({ where: { cle: "titres" }, create: { cle: "titres", texte }, update: { texte } });
+}
+
+export async function titreValide(t: unknown): Promise<string | null> {
+  return titreDans(await titres(), t);
 }
