@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { PREMIER_ADMIN } from "@/lib/finances";
 import { appeler } from "../components/api";
 
 export default function InstallationForm() {
-  const [f, setF] = useState({ motDePasseInstallation: "", prenom: "", nom: "", courriel: "" });
+  const [f, setF] = useState({ motDePasseInstallation: "", ...PREMIER_ADMIN, courriel: "" } as Record<string, string>);
   const [erreur, setErreur] = useState("");
   const [lien, setLien] = useState("");
   const [charge, setCharge] = useState(false);
-  const maj = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+  const maj = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
   async function valider(e: React.FormEvent) {
     e.preventDefault();
@@ -50,7 +51,11 @@ export default function InstallationForm() {
         </label>
       </div>
       <label className="fin-champ">
-        <span>Courriel</span>
+        <span>Identifiant (pour se connecter)</span>
+        <input className="fin-input" autoCapitalize="none" autoCorrect="off" required value={f.identifiant} onChange={maj("identifiant")} />
+      </label>
+      <label className="fin-champ">
+        <span>Courriel (reçoit le code de connexion)</span>
         <input className="fin-input" type="email" required value={f.courriel} onChange={maj("courriel")} />
       </label>
       <button className="fin-btn plein" disabled={charge}>

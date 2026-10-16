@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, utilisateurCourant } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { ROLES } from "@/lib/finances";
+import { ROLES, normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
 import { leaderValide } from "@/lib/fin-demandes";
 
 // Création d'un compte (super admin) + envoi du lien d'activation.
@@ -17,12 +17,17 @@ export async function POST(req: Request) {
   if (!prenom || !nom || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel))
     return NextResponse.json({ error: "Prénom, nom et courriel valide requis." }, { status: 400 });
   if (!(role in ROLES)) return NextResponse.json({ error: "Niveau invalide." }, { status: 400 });
+  const identifiant = normaliserIdentifiant(b.identifiant);
+  const pbId = problemeIdentifiant(identifiant);
+  if (pbId) return NextResponse.json({ error: pbId }, { status: 400 });
+  if (await prisma.finUtilisateur.findUnique({ where: { identifiant } }))
+    return NextResponse.json({ error: `L'identifiant « ${identifiant} » est déjà pris.` }, { status: 409 });
   if (await prisma.finUtilisateur.findUnique({ where: { courriel } }))
     return NextResponse.json({ error: "Un compte existe déjà avec ce courriel." }, { status: 409 });
   const leaderId = await leaderValide(b.leaderId);
   if (leaderId === false) return NextResponse.json({ error: "Leader invalide." }, { status: 400 });
 
-  const u = await prisma.finUtilisateur.create({ data: { prenom, nom, courriel, role, leaderId } });
+  const u = await prisma.finUtilisateur.create({ data: { prenom, nom, identifiant, courriel, role, leaderId } });
   const jeton = await creerJetonCompte(u.id);
   await courrielInvitation(u.courriel, u.prenom, jeton);
   return NextResponse.json({ ok: true, id: u.id, lien: lienFinances(`/activer/${jeton}`) });

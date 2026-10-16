@@ -15,6 +15,7 @@ export default async function UtilisateursPage() {
     id: u.id,
     prenom: u.prenom,
     nom: u.nom,
+    identifiant: u.identifiant || "",
     courriel: u.courriel,
     role: u.role,
     actif: u.actif,

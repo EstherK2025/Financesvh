@@ -10,7 +10,7 @@ export default async function InstallationPage() {
   return (
     <div className="fin-etroit">
       <h1>Installation</h1>
-      <p className="sous">Créez le premier compte super admin. Il pourra ensuite créer tous les autres comptes.</p>
+      <p className="sous">Créez le premier compte super admin (GA Maïté). Il crée ensuite tous les autres comptes.</p>
       <InstallationForm />
     </div>
   );

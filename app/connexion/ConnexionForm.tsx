@@ -7,7 +7,7 @@ import { appeler } from "../components/api";
 // Connexion en 2 étapes : mot de passe, puis code reçu par courriel.
 export default function ConnexionForm() {
   const [etape, setEtape] = useState<"mdp" | "code">("mdp");
-  const [courriel, setCourriel] = useState("");
+  const [identifiant, setIdentifiant] = useState("");
   const [mdp, setMdp] = useState("");
   const [code, setCode] = useState("");
   const [masque, setMasque] = useState("");
@@ -19,7 +19,7 @@ export default function ConnexionForm() {
     e.preventDefault();
     setCharge(true);
     setErreur("");
-    const r = await appeler<{ courriel: string }>("/api/auth/connexion", { json: { courriel, motDePasse: mdp } });
+    const r = await appeler<{ courriel: string }>("/api/auth/connexion", { json: { identifiant, motDePasse: mdp } });
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
     setMasque(r.data.courriel);
@@ -90,8 +90,17 @@ export default function ConnexionForm() {
     <form className="fin-carte" onSubmit={envoyerMdp}>
       {erreur && <div className="fin-erreur">{erreur}</div>}
       <label className="fin-champ">
-        <span>Courriel</span>
-        <input className="fin-input" type="email" autoComplete="username" required value={courriel} onChange={(e) => setCourriel(e.target.value)} />
+        <span>Identifiant ou courriel</span>
+        <input
+          className="fin-input"
+          autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          required
+          value={identifiant}
+          onChange={(e) => setIdentifiant(e.target.value)}
+        />
       </label>
       <label className="fin-champ">
         <span>Mot de passe</span>

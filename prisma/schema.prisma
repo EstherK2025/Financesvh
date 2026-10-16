@@ -24,7 +24,8 @@ model FinUtilisateur {
   id           String   @id @default(cuid())
   prenom       String
   nom          String
-  courriel     String   @unique // en minuscules
+  identifiant  String?  @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules
+  courriel     String   @unique // en minuscules — reçoit le code de connexion
   role         String   @default("utilisateur") // "utilisateur" | "leader" | "superadmin"
   actif        Boolean  @default(true)
   motDePasse   String? // hash scrypt "sel:hash" ; null tant que le compte n'est pas activé

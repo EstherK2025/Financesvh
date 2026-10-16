@@ -13,17 +13,17 @@ export const FIN = {
   contactEmail: "info@eventsevhnb.ca",
 } as const;
 
+// Premier compte super admin, proposé à l'installation (crée ensuite les autres).
+export const PREMIER_ADMIN = { prenom: "GA", nom: "Maïté", identifiant: "estherk" } as const;
+
 // Catégories de dépenses (👉 ajouter / retirer librement).
 export const CATEGORIES = [
-  "Locations",
-  "Nourriture & rafraîchissements",
-  "Transport & déplacements",
-  "Matériel & fournitures",
-  "Décoration",
-  "Impression & communication",
-  "Sonorisation & technique",
-  "Honoraires & cadeaux",
-  "Autre",
+  "Location matériel",
+  "Hébergement",
+  "Location voiture",
+  "Repas",
+  "Livres",
+  "Produits de nettoyage",
 ] as const;
 
 export const TYPES = {
@@ -97,6 +97,17 @@ export function parseMontant(saisie: unknown): number | null {
 
 export function nomUtilisateur(u: { prenom: string; nom: string }): string {
   return `${u.prenom} ${u.nom}`.trim();
+}
+
+// ── Identifiant (nom d'utilisateur) ──
+// 3 à 30 caractères : lettres minuscules, chiffres, point, tiret, souligné.
+export function normaliserIdentifiant(s: unknown): string {
+  return String(s ?? "").trim().toLowerCase();
+}
+export function problemeIdentifiant(id: string): string | null {
+  if (!/^[a-z0-9._-]{3,30}$/.test(id))
+    return "Identifiant : 3 à 30 caractères (lettres minuscules sans accent, chiffres, point, tiret).";
+  return null;
 }
 
 // ── Mot de passe sécurisé ──

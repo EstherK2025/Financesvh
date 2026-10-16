@@ -8,6 +8,7 @@ export type LigneUtilisateur = {
   id: string;
   prenom: string;
   nom: string;
+  identifiant: string;
   courriel: string;
   role: string;
   actif: boolean;
@@ -19,7 +20,7 @@ export type LigneUtilisateur = {
 };
 
 export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisateur[]; moiId: string }) {
-  const [nouveau, setNouveau] = useState({ prenom: "", nom: "", courriel: "", role: "utilisateur", leaderId: "" });
+  const [nouveau, setNouveau] = useState({ prenom: "", nom: "", identifiant: "", courriel: "", role: "utilisateur", leaderId: "" });
   const [erreur, setErreur] = useState("");
   const [lien, setLien] = useState<{ nom: string; url: string } | null>(null);
   const [charge, setCharge] = useState(false);
@@ -33,7 +34,7 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
     setLien({ nom: `${nouveau.prenom} ${nouveau.nom}`, url: r.data.lien });
-    setNouveau({ prenom: "", nom: "", courriel: "", role: "utilisateur", leaderId: "" });
+    setNouveau({ prenom: "", nom: "", identifiant: "", courriel: "", role: "utilisateur", leaderId: "" });
     setTimeout(() => window.location.reload(), 50);
   }
 
@@ -73,7 +74,19 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
             <input className="fin-input" required value={nouveau.nom} onChange={(e) => setNouveau({ ...nouveau, nom: e.target.value })} />
           </label>
           <label className="fin-champ">
-            <span>Courriel</span>
+            <span>Identifiant (pour se connecter)</span>
+            <input
+              className="fin-input"
+              autoCapitalize="none"
+              autoCorrect="off"
+              required
+              placeholder="Ex. cindy"
+              value={nouveau.identifiant}
+              onChange={(e) => setNouveau({ ...nouveau, identifiant: e.target.value.toLowerCase() })}
+            />
+          </label>
+          <label className="fin-champ">
+            <span>Courriel (reçoit le code de connexion)</span>
             <input className="fin-input" type="email" required value={nouveau.courriel} onChange={(e) => setNouveau({ ...nouveau, courriel: e.target.value })} />
           </label>
           <label className="fin-champ">
@@ -124,7 +137,10 @@ export default function Utilisateurs({ lignes, moiId }: { lignes: LigneUtilisate
                     {u.prenom} {u.nom}
                   </b>
                   {u.id === moiId && " (moi)"}
-                  <div style={{ fontSize: 11, color: "var(--fin-gris)" }}>{u.courriel}</div>
+                  <div style={{ fontSize: 11, color: "var(--fin-gris)" }}>
+                    {u.identifiant ? `@${u.identifiant} · ` : ""}
+                    {u.courriel}
+                  </div>
                   {u.equipe > 0 && <div style={{ fontSize: 11 }}>Équipe : {u.equipe} pers.</div>}
                 </td>
                 <td>

@@ -132,6 +132,7 @@ export type UtilisateurCourant = {
   id: string;
   prenom: string;
   nom: string;
+  identifiant: string | null;
   courriel: string;
   role: Role;
   leaderId: string | null;
@@ -144,7 +145,7 @@ export async function utilisateurCourant(): Promise<UtilisateurCourant | null> {
   const s = await prisma.finSession.findUnique({ where: { jetonHash: sha256(jeton) }, include: { utilisateur: true } });
   if (!s || s.expire < new Date() || !s.utilisateur.actif) return null;
   const u = s.utilisateur;
-  return { id: u.id, prenom: u.prenom, nom: u.nom, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId };
+  return { id: u.id, prenom: u.prenom, nom: u.nom, identifiant: u.identifiant, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId };
 }
 
 // Fermer toutes les sessions d'un compte (désactivation, nouveau mot de passe).
@@ -178,4 +179,12 @@ export function motDePasseInstallationValide(saisi: string): boolean {
   const a = Buffer.from(sha256(saisi));
   const b = Buffer.from(sha256(attendu));
   return timingSafeEqual(a, b);
+}
+
+// Retrouve un compte à partir de ce que la personne a saisi : identifiant
+// (ex. « estherk ») ou adresse courriel.
+export async function trouverCompte(saisie: unknown) {
+  const v = String(saisie ?? "").trim().toLowerCase();
+  if (!v) return null;
+  return prisma.finUtilisateur.findUnique({ where: v.includes("@") ? { courriel: v } : { identifiant: v } });
 }

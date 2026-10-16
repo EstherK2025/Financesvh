@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { creerCode, verifierMotDePasse, MAX_ECHECS, DUREE_VERROU_MS } from "@/lib/fin-auth";
+import { creerCode, trouverCompte, verifierMotDePasse, MAX_ECHECS, DUREE_VERROU_MS } from "@/lib/fin-auth";
 import { courrielCode } from "@/lib/fin-email";
 
-// Étape 1 : courriel + mot de passe → envoi d'un code par courriel.
+// Étape 1 : identifiant (ou courriel) + mot de passe → envoi d'un code par courriel.
 export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
-  const courriel = String(b.courriel || "").trim().toLowerCase();
   const motDePasse = String(b.motDePasse || "");
-  const refus = NextResponse.json({ error: "Courriel ou mot de passe incorrect." }, { status: 401 });
-  if (!courriel || !motDePasse) return refus;
+  const refus = NextResponse.json({ error: "Identifiant ou mot de passe incorrect." }, { status: 401 });
+  if (!motDePasse) return refus;
 
-  const u = await prisma.finUtilisateur.findUnique({ where: { courriel } });
+  const u = await trouverCompte(b.identifiant ?? b.courriel);
   if (!u || !u.actif || !u.motDePasse) return refus;
   if (u.verrouJusqua && u.verrouJusqua > new Date()) {
     const min = Math.ceil((u.verrouJusqua.getTime() - Date.now()) / 60000);

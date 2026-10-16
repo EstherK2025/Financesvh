@@ -5,14 +5,14 @@ import Link from "next/link";
 import { appeler } from "../components/api";
 
 export default function OubliePage() {
-  const [courriel, setCourriel] = useState("");
+  const [identifiant, setIdentifiant] = useState("");
   const [envoye, setEnvoye] = useState(false);
   const [charge, setCharge] = useState(false);
 
   async function envoyer(e: React.FormEvent) {
     e.preventDefault();
     setCharge(true);
-    await appeler("/api/auth/oublie", { json: { courriel } });
+    await appeler("/api/auth/oublie", { json: { identifiant } });
     setCharge(false);
     setEnvoye(true);
   }
@@ -23,12 +23,12 @@ export default function OubliePage() {
       <p className="sous">Recevez un lien pour choisir un nouveau mot de passe.</p>
       <form className="fin-carte" onSubmit={envoyer}>
         {envoye ? (
-          <div className="fin-succes">Si un compte existe pour cette adresse, un lien vient d&apos;être envoyé (valable 24 h).</div>
+          <div className="fin-succes">Si ce compte existe, un lien vient d&apos;être envoyé (valable 24 h).</div>
         ) : (
           <>
             <label className="fin-champ">
-              <span>Courriel</span>
-              <input className="fin-input" type="email" required value={courriel} onChange={(e) => setCourriel(e.target.value)} />
+              <span>Identifiant ou courriel</span>
+              <input className="fin-input" autoCapitalize="none" autoCorrect="off" required value={identifiant} onChange={(e) => setIdentifiant(e.target.value)} />
             </label>
             <button className="fin-btn plein" disabled={charge}>
               {charge ? "…" : "Envoyer le lien"}
