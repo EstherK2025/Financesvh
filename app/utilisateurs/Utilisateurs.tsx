@@ -392,7 +392,8 @@ export default function Utilisateurs({
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
         >
           <span>
-            <b>Organigramme VH</b> : {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer
+            <b className="fin-titre-note">Organigramme VH</b>
+            {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer
             (8 ministères, leurs départements ; courriel identifiant@evhnb.ca).
           </span>
           <button className="fin-btn accent petit" disabled={charge} onClick={chargerOrganigramme}>

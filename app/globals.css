@@ -1265,3 +1265,34 @@ textarea.fin-input {
 .fin-zone-sensible h2 {
   color: var(--fin-rouge);
 }
+
+/* Légende : le terme en gras sur sa propre ligne, l'explication en dessous */
+.fin-legende {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--fin-gris);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+@media (min-width: 760px) {
+  .fin-legende {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.fin-legende li {
+  background: #fff;
+  border: 1px solid var(--fin-trait);
+  border-left: 4px solid var(--fin-accent);
+  border-radius: var(--fin-r-sm);
+  padding: 10px 14px;
+}
+.fin-legende b,
+.fin-titre-note {
+  display: block;
+  font-family: var(--f-titres), sans-serif;
+  font-weight: 800;
+  color: var(--fin-encre);
+  margin-bottom: 2px;
+}
