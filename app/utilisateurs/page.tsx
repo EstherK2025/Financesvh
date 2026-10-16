@@ -23,6 +23,7 @@ export default async function UtilisateursPage() {
     departement: u.departement || "",
     actif: u.actif,
     active: Boolean(u.motDePasse),
+    authenticator: u.totpActif,
     leaderId: u.leaderId || "",
     derniereConnexion: u.derniereConnexion ? u.derniereConnexion.toLocaleDateString("fr-CA") : "",
   }));

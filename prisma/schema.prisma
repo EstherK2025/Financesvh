@@ -43,11 +43,14 @@ model FinUtilisateur {
   echecs       Int      @default(0)
   verrouJusqua DateTime?
   derniereConnexion DateTime?
+  // Double authentification par application Authenticator (TOTP).
+  totpSecret   String? // clé partagée (base32), créée au premier enrôlement
+  totpActif    Boolean  @default(false) // QR code scanné et premier code validé
+  totpDernier  Int? // dernier pas de temps accepté (un code ne sert qu'une fois)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   sessions     FinSession[]
-  codes        FinCode[]
   demandes     FinDemande[]    @relation("FinDemandeur")
   aApprouver   FinDemande[]    @relation("FinApprobateur")
   historique   FinHistorique[]
@@ -61,20 +64,6 @@ model FinSession {
   utilisateurId String
   utilisateur   FinUtilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
   expire        DateTime
-  createdAt     DateTime       @default(now())
-
-  @@index([utilisateurId])
-}
-
-// Code de vérification à 6 chiffres envoyé par courriel (2ᵉ facteur).
-model FinCode {
-  id            String         @id @default(cuid())
-  utilisateurId String
-  utilisateur   FinUtilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-  codeHash      String
-  expire        DateTime
-  tentatives    Int            @default(0)
-  utilise       Boolean        @default(false)
   createdAt     DateTime       @default(now())
 
   @@index([utilisateurId])

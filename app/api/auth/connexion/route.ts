@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { creerCode, egalConstant, ouvrirPremiere, ouvrirSession, trouverCompte, verifierMotDePasse, MAX_ECHECS, DUREE_VERROU_MS } from "@/lib/fin-auth";
-import { courrielCode } from "@/lib/fin-email";
-import { doubleAuthActive, mdpTemporaire } from "@/lib/fin-reglages";
-import { masquerCourriel, nomUtilisateur } from "@/lib/finances";
+import { egalConstant, ouvrirPremiere, trouverCompte, verifierMotDePasse, MAX_ECHECS, DUREE_VERROU_MS } from "@/lib/fin-auth";
+import { suiteApresMotDePasse } from "@/lib/fin-connexion";
+import { mdpTemporaire } from "@/lib/fin-reglages";
+import { nomUtilisateur } from "@/lib/finances";
 
 // Étape 1 : identifiant (ou courriel) + mot de passe.
-//  • Compte déjà activé → connecté directement, ou code par courriel si la
-//    double authentification est activée (Réglages).
 //  • Première connexion (aucun mot de passe choisi) → le mot de passe temporaire
-//    universel donne accès à l'écran « Créez votre mot de passe », puis au code.
+//    universel donne accès à l'écran « Créez votre mot de passe ».
+//  • Sinon → connecté, ou étape Authenticator si la double authentification
+//    est activée (Réglages).
 export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const motDePasse = String(b.motDePasse || "");
@@ -36,20 +36,7 @@ export async function POST(req: Request) {
 
   if (premiere) {
     await ouvrirPremiere(u.id);
-    return NextResponse.json({ ok: true, etape: "premiere", prenom: nomUtilisateur(u), besoinCourriel: !u.courriel && (await doubleAuthActive()) });
+    return NextResponse.json({ ok: true, etape: "premiere", prenom: nomUtilisateur(u) });
   }
-  if (!(await doubleAuthActive())) {
-    await ouvrirSession(u.id);
-    return NextResponse.json({ ok: true, etape: "connecte" });
-  }
-  if (!u.courriel) return refus;
-
-  try {
-    const code = await creerCode(u.id);
-    await courrielCode(u.courriel, nomUtilisateur(u), code);
-  } catch (e) {
-    console.error("[finances] envoi du code impossible :", e);
-    return NextResponse.json({ error: "Impossible d'envoyer le code de vérification. Réessayez plus tard." }, { status: 502 });
-  }
-  return NextResponse.json({ ok: true, etape: "code", courriel: masquerCourriel(u.courriel) });
+  return NextResponse.json(await suiteApresMotDePasse(u));
 }

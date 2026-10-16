@@ -24,6 +24,7 @@ export type LigneUtilisateur = {
   departement: string;
   actif: boolean;
   active: boolean; // mot de passe choisi
+  authenticator: boolean; // application Authenticator configurée
   leaderId: string;
   derniereConnexion: string;
 };
@@ -166,6 +167,7 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
       </td>
       <td style={{ whiteSpace: "nowrap", fontSize: 12 }}>
         {!u.actif ? "Désactivé" : u.active ? `Actif${u.derniereConnexion ? ` · vu le ${u.derniereConnexion}` : ""}` : "À activer"}
+        {u.authenticator && <div title="Application Authenticator configurée">🔐 Authenticator</div>}
       </td>
       <td>
         <div className="fin-actions" style={{ justifyContent: "flex-end" }}>
@@ -194,6 +196,17 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
                 ))}
               </select>
             </>
+          )}
+          {u.authenticator && (
+            <button
+              className="fin-btn blanc petit"
+              onClick={() =>
+                confirm(`Réinitialiser l'Authenticator de ${u.prenom} ${u.nom} ? (téléphone perdu ou changé : un nouveau QR code lui sera proposé à sa prochaine connexion)`) &&
+                modifier(u.id, { reinitialiserAuthenticator: true })
+              }
+            >
+              Réinit. Authenticator
+            </button>
           )}
           {u.actif && (
             <button className="fin-btn blanc petit" onClick={() => inviter(u)}>

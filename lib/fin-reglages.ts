@@ -27,9 +27,8 @@ export async function logo() {
   return prisma.finReglage.findUnique({ where: { cle: "logo" } });
 }
 
-// Double authentification (code par courriel) : DÉSACTIVÉE par défaut, tant que
-// les courriels (Resend + boîtes @evhnb.ca) ne sont pas prêts. Le super
-// administrateur l'active dans Réglages.
+// Double authentification (application Authenticator) : DÉSACTIVÉE par
+// défaut ; le super administrateur l'active dans Réglages.
 export async function doubleAuthActive(): Promise<boolean> {
   const r = await prisma.finReglage.findUnique({ where: { cle: "double_auth" } });
   return r?.texte === "oui";

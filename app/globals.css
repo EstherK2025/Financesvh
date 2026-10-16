@@ -637,3 +637,28 @@ textarea.fin-input {
   height: auto;
   margin: 8px auto 22px;
 }
+/* Configuration de l'application Authenticator */
+.fin-instructions {
+  font-size: 14px;
+  margin: 0 0 14px 20px;
+  line-height: 1.5;
+}
+.fin-qr {
+  border: 1px solid var(--fin-trait);
+  border-radius: 12px;
+  padding: 8px;
+  background: #fff;
+}
+.fin-cle {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: var(--fin-fond);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-top: 4px;
+  user-select: all;
+  word-break: break-all;
+}

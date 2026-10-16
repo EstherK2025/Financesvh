@@ -5,7 +5,7 @@ import { courrielInvitation, lienFinances } from "@/lib/fin-email";
 import { ROLES, nomUtilisateur } from "@/lib/finances";
 import { organisationDe } from "@/lib/fin-comptes";
 
-// Modifier un compte (super admin) : { prenom?, nom?, role?, ministere?, departement?, leaderId?, actif? }
+// Modifier un compte (super admin) : { prenom?, nom?, role?, ministere?, departement?, leaderId?, actif?, reinitialiserAuthenticator? }
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const moi = await utilisateurCourant();
   if (moi?.role !== "superadmin") return NextResponse.json({ error: "Réservé au super administrateur." }, { status: 403 });
@@ -35,6 +35,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!o.ok) return NextResponse.json({ error: o.erreur }, { status: 400 });
     Object.assign(data, { role }, o.org);
   }
+  // Téléphone perdu/changé : la personne reconfigurera l'Authenticator à sa prochaine connexion.
+  if (b.reinitialiserAuthenticator === true) Object.assign(data, { totpSecret: null, totpActif: false, totpDernier: null });
   if (b.actif !== undefined) {
     if (id === moi.id && !b.actif) return NextResponse.json({ error: "Vous ne pouvez pas désactiver votre propre compte." }, { status: 400 });
     data.actif = Boolean(b.actif);

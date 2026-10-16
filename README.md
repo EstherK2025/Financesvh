@@ -78,8 +78,8 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
 - Connexion par **identifiant** (ex. `estherk`, `tribus`) ou courriel.
 - **Première connexion** : identifiant + **mot de passe temporaire universel**
   → la personne **crée son propre mot de passe** (10 caractères min.,
-  majuscule, minuscule, chiffre) → elle est connectée (après un **code par
-  courriel** si la double authentification est activée). Le mot de passe temporaire ne fonctionne plus ensuite pour ce
+  majuscule, minuscule, chiffre) → elle est connectée (après avoir configuré
+  l'application **Authenticator** si la double authentification est activée). Le mot de passe temporaire ne fonctionne plus ensuite pour ce
   compte (ni pour un compte déjà activé).
 - Le mot de passe temporaire universel est **affiché au super administrateur**
   (Utilisateurs et Réglages) et modifiable dans **Réglages**. Il est généré au
@@ -88,9 +88,14 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
   sauf si un autre est saisi. Ces boîtes doivent exister : elles reçoivent les
   codes de connexion.
 - Autre possibilité : bouton « Lien d'activation » (lien personnel à envoyer).
-- **Double authentification** (code à 6 chiffres reçu par courriel, 10 min,
-  5 essais) : **désactivée par défaut**, le super administrateur l'active dans
-  **Réglages** quand Resend et les boîtes `@evhnb.ca` sont prêts. Verrouillage 15 min après 5 mots de passe
+- **Double authentification par application Authenticator** (Google
+  Authenticator, Microsoft Authenticator… — codes TOTP à 6 chiffres, toutes
+  les 30 s, aucun courriel nécessaire) : **désactivée par défaut**, le super
+  administrateur l'active dans **Réglages**. À sa connexion suivante, chaque
+  personne scanne un QR code une seule fois, puis entre le code de
+  l'application à chaque connexion. Un code ne sert qu'une fois ; 5 codes
+  faux = compte verrouillé 15 min. Téléphone perdu ou changé : bouton
+  **« Réinit. Authenticator »** dans Utilisateurs. Verrouillage 15 min après 5 mots de passe
   erronés. « Mot de passe oublié » par lien courriel.
 - Factures stockées en base, visibles uniquement par le demandeur, son
   approbateur et les finances. Pages non indexées par les moteurs de recherche.

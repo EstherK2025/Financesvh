@@ -11,7 +11,7 @@ export default async function ReglagesPage() {
     <div style={{ maxWidth: 640 }}>
       <h1>Réglages</h1>
       <p className="sous">Réservé au super administrateur.</p>
-      <Reglages deuxFacteurs={deuxFacteurs} resend={Boolean(process.env.RESEND_API_KEY)} mdp={mdp} aUnLogo={Boolean(l?.donnees)} version={l?.updatedAt.getTime() || 0} />
+      <Reglages deuxFacteurs={deuxFacteurs} mdp={mdp} aUnLogo={Boolean(l?.donnees)} version={l?.updatedAt.getTime() || 0} />
     </div>
   );
 }

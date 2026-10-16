@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ComptePage() {
   const moi = await exigerUtilisateur();
+  const tot = (await prisma.finUtilisateur.findUnique({ where: { id: moi.id }, select: { totpActif: true } }))?.totpActif;
   const leader = moi.leaderId ? await prisma.finUtilisateur.findUnique({ where: { id: moi.leaderId } }) : null;
   return (
     <div style={{ maxWidth: 520 }}>
@@ -36,7 +37,11 @@ export default async function ComptePage() {
             </>
           )}
           <dt>Connexion</dt>
-          <dd>{(await doubleAuthActive()) ? "Mot de passe + code par courriel" : "Identifiant + mot de passe"}</dd>
+          <dd>
+            {(await doubleAuthActive())
+              ? `Mot de passe + application Authenticator${tot ? " (configurée)" : " (à configurer à la prochaine connexion)"}`
+              : "Identifiant + mot de passe"}
+          </dd>
         </dl>
       </div>
       <h2>Changer mon mot de passe</h2>
