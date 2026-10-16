@@ -37,7 +37,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Transition>{children}</Transition>
           </main>
           <footer className="fin-footer">
-            <span className="fin-footer-vh">VH</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={FIN.logoComplet} alt="Vases d'Honneur" className="fin-footer-logo" />
             {FIN.organisation} · {FIN.nom} · Accès réservé
           </footer>
         </div>
