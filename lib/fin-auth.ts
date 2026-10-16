@@ -207,7 +207,8 @@ export function motDePasseInstallationValide(saisi: string): boolean {
 // Retrouve un compte à partir de ce que la personne a saisi : identifiant
 // (ex. « estherk ») ou adresse courriel.
 export async function trouverCompte(saisie: unknown) {
-  const v = String(saisie ?? "").trim().normalize("NFC").toLowerCase();
+  // Accents tapés ignorés (« Joël » → « joel »).
+  const v = sansAccents(String(saisie ?? "").trim()).toLowerCase();
   if (!v) return null;
   if (v.includes("@")) return prisma.finUtilisateur.findUnique({ where: { courriel: v } });
   const exact = await prisma.finUtilisateur.findUnique({ where: { identifiant: v } });
