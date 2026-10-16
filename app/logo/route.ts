@@ -1,10 +1,10 @@
 import { logo } from "@/lib/fin-reglages";
 
-// Logo de la barre du haut : celui téléversé par le super administrateur,
-// sinon le monogramme VH fourni (public/vh-symbole.png).
+// Logo complet Vases d'Honneur (barre du haut, fiches PDF) : celui téléversé
+// par le super administrateur, sinon le logo officiel fourni (public/vh-logo.png).
 export async function GET(req: Request) {
   const l = await logo();
-  if (!l?.donnees) return Response.redirect(new URL("/vh-symbole.png", req.url), 302);
+  if (!l?.donnees) return Response.redirect(new URL("/vh-logo.png", req.url), 302);
   return new Response(Buffer.from(l.donnees), {
     headers: {
       "Content-Type": l.typeMime || "image/png",

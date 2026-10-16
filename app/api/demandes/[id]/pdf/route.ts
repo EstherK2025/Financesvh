@@ -20,10 +20,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   });
   if (!d) return new Response("Demande introuvable.", { status: 404 });
 
-  // Logo complet Vases d'Honneur (fichier public du site).
+  // Logo complet Vases d'Honneur (celui des Réglages, sinon le logo officiel).
   let logo: Uint8Array | null = null;
   try {
-    const r = await fetch(new URL("/vh-logo.png", req.url));
+    const r = await fetch(new URL("/logo", req.url));
     if (r.ok) logo = new Uint8Array(await r.arrayBuffer());
   } catch {
     logo = null;

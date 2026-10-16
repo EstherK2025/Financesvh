@@ -8,10 +8,10 @@ export const FIN = {
   nom: "Département des finances",
   organisation: "Vases d'Honneur",
   sigle: "VH",
-  // Logo de la barre du haut : monogramme VH (public/vh-symbole.png), remplaçable
-  // par le super administrateur (Réglages). Logo complet : public/vh-logo.png.
+  // Logo complet Vases d'Honneur : public/vh-logo.png, remplaçable par le super
+  // administrateur (Réglages) — servi par /logo.
   logo: "/logo",
-  logoComplet: "/vh-logo.png",
+  logoComplet: "/logo",
   contactEmail: "info@eventsevhnb.ca",
 } as const;
 

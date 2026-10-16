@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatMontant, libelleOrg, nomUtilisateur } from "@/lib/finances";
 import { exigerUtilisateur } from "./components/garde";
 import DemandeListe from "./components/DemandeListe";
+import Icone from "./components/Icone";
 
 export const dynamic = "force-dynamic";
 
@@ -57,17 +58,23 @@ export default async function TableauDeBord() {
 
   return (
     <>
-      <h1>Bonjour {nomUtilisateur(moi)} 👋</h1>
-      <p className="sous">{libelleOrg(moi.ministere, moi.departement) || "Demandes de décaissement et de remboursement."}</p>
-
-      <div className="fin-actions" style={{ marginBottom: 18 }}>
-        <Link href="/nouvelle?type=remboursement" className="fin-btn">
-          + Remboursement
-        </Link>
-        <Link href="/nouvelle?type=decaissement" className="fin-btn blanc">
-          + Décaissement
-        </Link>
-      </div>
+      <section className="fin-hero">
+        <div className="fin-hero-sur">{libelleOrg(moi.ministere, moi.departement) || "Département des finances"}</div>
+        <h1>Bonjour {nomUtilisateur(moi)}</h1>
+        <p className="sous">
+          {aTraiter > 0
+            ? `${aTraiter} demande${aTraiter > 1 ? "s" : ""} attend${aTraiter > 1 ? "ent" : ""} votre décision.`
+            : "Demandes de décaissement et de remboursement, de la soumission au paiement."}
+        </p>
+        <div className="fin-actions">
+          <Link href="/nouvelle?type=remboursement" className="fin-btn">
+            <Icone nom="recu" taille={18} /> Remboursement
+          </Link>
+          <Link href="/nouvelle?type=decaissement" className="fin-btn blanc">
+            <Icone nom="avance" taille={18} /> Décaissement
+          </Link>
+        </div>
+      </section>
 
       <div className="fin-stats">
         {(estLeader || finances) && (
@@ -146,11 +153,14 @@ async function TableauExterne({ id }: { id: string }) {
   ]);
   return (
     <>
-      <h1>Approbateur externe</h1>
-      <p className="sous">
-        Compte partagé. Ouvrez une demande : avant de décider, vous indiquerez votre nom complet, votre fonction dans l&apos;église, votre
-        signature et pourquoi c&apos;est vous qui l&apos;approuvez.
-      </p>
+      <section className="fin-hero">
+        <div className="fin-hero-sur">Compte partagé</div>
+        <h1>Approbateur externe</h1>
+        <p className="sous" style={{ marginBottom: 0 }}>
+          Ouvrez une demande : avant de décider, vous indiquerez votre nom complet, votre fonction dans l&apos;église, votre signature et
+          pourquoi c&apos;est vous qui l&apos;approuvez.
+        </p>
+      </section>
       <h2>Demandes qui vous sont attribuées ({aTraiter.length})</h2>
       <DemandeListe demandes={aTraiter} avecDemandeur vide="Aucune demande en attente." />
       {traitees.length > 0 && (

@@ -130,15 +130,43 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
 - Factures stockées en base, visibles uniquement par le demandeur, son
   approbateur et les finances. Pages non indexées par les moteurs de recherche.
 
-## Couleurs et logo Vases d'Honneur
+## Couleurs, logo et navigation
 
-- **Logo** : `public/vh-logo.png` (logo complet, pages de connexion) et
-  `public/vh-symbole.png` (monogramme « VH », barre du haut et icône d'onglet).
-  Le super administrateur peut remplacer le logo de la barre du haut dans
-  **Réglages**.
+- **Logo** : le logo complet Vases d'Honneur (`public/vh-logo.png`) en haut de
+  chaque page, sur les pages de connexion et sur les fiches PDF. Le super
+  administrateur peut le remplacer dans **Réglages** (meilleure qualité).
 - **Couleurs** (tirées du logo) : vert `#2d6a66`, or `#ccb042`, rouge `#ae302f`
-  — variables `--fin-primaire`, `--fin-accent`, `--fin-orange` en haut du bloc
-  « DÉPARTEMENT DES FINANCES » de `app/globals.css`.
+  — variables en haut de `app/globals.css`. Liseré vert · or · rouge sous la
+  barre du haut, bandeau d'accueil en dégradé vert.
+- **Téléphone** : barre d'onglets en bas de l'écran ; **glisser vers la
+  gauche / la droite** pour passer à l'onglet suivant / précédent (avec
+  animation de glissement).
+
+## Signatures
+
+Approuver une demande = **signer** dans le cadre prévu (doigt, stylet ou
+souris), pour le ministère (1re approbation) comme pour les finances. La
+signature, le **nom**, la **fonction** et la **date** apparaissent
+automatiquement dans l'historique et dans le bloc « Signatures » de la fiche
+PDF.
+
+## Approbateur externe (compte partagé)
+
+Un **seul** compte, créé dans **Réglages**, avec un **identifiant et un mot de
+passe fixes**, pour les personnes qui ne sont ni super administrateur ni
+ministère / département. Il ne voit que les demandes qui lui sont
+**attribuées** (le super administrateur lui envoie sa demande, ou utilise
+« Attribuer la 1re approbation » sur une demande en attente). Avant
+d'approuver, la personne connectée indique son **nom complet**, sa **fonction
+dans l'église**, sa **signature** et **pourquoi c'est elle qui approuve** —
+tout figure sur la fiche PDF. Ce compte ne fait pas de demande et ne change pas
+son mot de passe (pas d'Authenticator).
+
+## Titres
+
+Le titre (GA, AP, PA, AE, AM, Responsable…) se choisit **à part** du prénom, à
+la première connexion ou par le super administrateur. La **liste des titres**
+se modifie dans **Réglages** (ajouter, retirer, réordonner).
 
 ---
 

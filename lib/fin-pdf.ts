@@ -142,7 +142,7 @@ export async function fichePdf(d: DemandePdf, genereePar: string, logoPng: Uint8
   // ── En-tête ──
   if (logoPng) {
     try {
-      const img = await pdf.embedPng(logoPng);
+      const img = logoPng[0] === 0xff && logoPng[1] === 0xd8 ? await pdf.embedJpg(logoPng) : await pdf.embedPng(logoPng);
       const h = 46;
       const w = (img.width / img.height) * h;
       page.drawImage(img, { x: MARGE, y: y - h + 10, width: w, height: h });

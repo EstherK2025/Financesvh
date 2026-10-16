@@ -4,6 +4,7 @@ import "./globals.css";
 import { FIN, nomUtilisateur } from "@/lib/finances";
 import { utilisateurCourant } from "@/lib/fin-auth";
 import FinNav from "./components/FinNav";
+import Transition from "./components/Transition";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -26,10 +27,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="fr">
       <body className={inter.className}>
-        <div className="fin">
+        <div className={`fin${moi ? " fin-connecte" : ""}`}>
           <FinNav utilisateur={moi ? { nom: nomUtilisateur(moi), role: moi.role } : null} />
-          <main className="fin-main">{children}</main>
+          <main className="fin-main">
+            <Transition>{children}</Transition>
+          </main>
           <footer className="fin-footer">
+            <span className="fin-footer-vh">VH</span>
             {FIN.organisation} · {FIN.nom} · Accès réservé
           </footer>
         </div>

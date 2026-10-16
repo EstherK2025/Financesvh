@@ -93,8 +93,8 @@ export default function Reglages({ mdp, aUnLogo, version, deuxFacteurs }: Props)
       </form>
 
       <div className="fin-carte">
-        <h2 style={{ marginTop: 0 }}>Logo de la barre du haut</h2>
-        <p style={{ fontSize: 14, marginBottom: 12 }}>Le monogramme VH officiel s&apos;affiche par défaut dans la barre du haut. Pour le remplacer : image carrée (PNG, JPG, WebP ou SVG, 2 Mo max).</p>
+        <h2 style={{ marginTop: 0 }}>Logo Vases d&apos;Honneur</h2>
+        <p style={{ fontSize: 14, marginBottom: 12 }}>Le logo complet officiel s&apos;affiche par défaut (barre du haut, pages de connexion, fiches PDF). Pour le remplacer par une meilleure version : PNG ou JPG sur fond blanc, format horizontal, 2 Mo max.</p>
         {aUnLogo && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={`/logo?v=${version}`} alt="Logo actuel" style={{ maxWidth: 140, maxHeight: 140, border: "1px solid var(--fin-trait)", borderRadius: 10, padding: 8, marginBottom: 12, display: "block" }} />
