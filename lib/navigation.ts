@@ -9,7 +9,7 @@ export function onglets(role: Role | null | undefined): Onglet[] {
   if (role === "delegue") return [{ href: "/", label: "Demandes à approuver", court: "À approuver", icone: "accueil" }];
   return [
     { href: "/", label: "Tableau de bord", court: "Accueil", icone: "accueil" },
-    { href: "/nouvelle", label: "Nouvelle demande", court: "Demander", icone: "plus" },
+    { href: "/nouvelle", label: "Nouvelle demande", court: "Créer", icone: "plus" },
     ...(role === "admin" ? [{ href: "/ministere", label: "Mon ministère", court: "Ministère", icone: "ministere" as const }] : []),
     ...(role === "superadmin"
       ? [
