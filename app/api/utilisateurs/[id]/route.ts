@@ -54,6 +54,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!o.ok) return NextResponse.json({ error: o.erreur }, { status: 400 });
     Object.assign(data, { role }, o.org);
   }
+  // Réinitialiser l'accès : le compte repart en « première connexion » (mot de
+  // passe temporaire universel → nom → nouveau mot de passe → identifiant prenom.nom).
+  if (b.reinitialiserAcces === true) {
+    if (u.role === "delegue") return NextResponse.json({ error: "Le compte partagé se gère dans les Réglages." }, { status: 400 });
+    Object.assign(data, { motDePasse: null, jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null, totpSecret: null, totpActif: false, totpDernier: null });
+  }
   // Téléphone perdu/changé : la personne reconfigurera l'Authenticator à sa prochaine connexion.
   if (b.reinitialiserAuthenticator === true) Object.assign(data, { totpSecret: null, totpActif: false, totpDernier: null });
   if (b.actif !== undefined) {
@@ -68,7 +74,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // Ministère renommé : ses départements suivent.
     await prisma.finUtilisateur.updateMany({ where: { leaderId: id }, data: { ministere: data.ministere as string } });
   }
-  if (data.actif === false) await fermerSessionsDe(id);
+  if (data.actif === false || b.reinitialiserAcces === true) await fermerSessionsDe(id);
   return NextResponse.json({ ok: true });
 }
 

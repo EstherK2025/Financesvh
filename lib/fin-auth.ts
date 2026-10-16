@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { prisma } from "./prisma";
-import type { Role } from "./finances";
+import { sansAccents, type Role } from "./finances";
 
 // ───────────────────────────────────────────────────────────
 // Authentification de la plateforme Finances :
@@ -207,7 +207,15 @@ export function motDePasseInstallationValide(saisi: string): boolean {
 // Retrouve un compte à partir de ce que la personne a saisi : identifiant
 // (ex. « estherk ») ou adresse courriel.
 export async function trouverCompte(saisie: unknown) {
-  const v = String(saisie ?? "").trim().toLowerCase();
+  // Accents tapés ignorés (« Joël » → « joel »).
+  const v = sansAccents(String(saisie ?? "").trim()).toLowerCase();
   if (!v) return null;
-  return prisma.finUtilisateur.findUnique({ where: v.includes("@") ? { courriel: v } : { identifiant: v } });
+  if (v.includes("@")) return prisma.finUtilisateur.findUnique({ where: { courriel: v } });
+  const exact = await prisma.finUtilisateur.findUnique({ where: { identifiant: v } });
+  if (exact) return exact;
+  // Identifiant tapé sans accents (« marie-eve.cote » pour « marie-ève.côté »).
+  const cible = sansAccents(v);
+  const comptes = await prisma.finUtilisateur.findMany({ where: { identifiant: { not: null } }, select: { id: true, identifiant: true } });
+  const trouve = comptes.filter((c) => sansAccents(c.identifiant!) === cible);
+  return trouve.length === 1 ? prisma.finUtilisateur.findUnique({ where: { id: trouve[0].id } }) : null;
 }

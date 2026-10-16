@@ -111,6 +111,16 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
   majuscule, minuscule, chiffre) → elle est connectée (après avoir configuré
   l'application **Authenticator** si la double authentification est activée). Le mot de passe temporaire ne fonctionne plus ensuite pour ce
   compte (ni pour un compte déjà activé).
+- À la première connexion, l'**identifiant devient automatiquement
+  `prénom.nom de famille`**, **sans accents ni caractères spéciaux**
+  (« Marie-Ève Côté » → `marie-eve.cote` ; « John de la Tour » →
+  `john.de-la-tour` ; `john.doe2` si déjà pris). Il s'affiche à l'écran ; les
+  accents tapés à la connexion sont ignorés. Le courriel par défaut suit
+  (`marie-eve.cote@evhnb.ca`).
+- **Réinitialiser l'accès** (Utilisateurs) : efface le mot de passe et
+  l'Authenticator ; le compte repart en première connexion.
+- **Supprimer toutes les demandes** (Réglages → zone sensible, confirmation
+  « SUPPRIMER ») : remise à zéro des demandes, factures et historiques.
 - Le mot de passe temporaire universel est **affiché au super administrateur**
   (Utilisateurs et Réglages) et modifiable dans **Réglages**. Il est généré au
   hasard à l'installation (format `VH-XXXXXX`).

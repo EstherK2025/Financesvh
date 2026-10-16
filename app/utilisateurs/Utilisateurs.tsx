@@ -326,6 +326,18 @@ export default function Utilisateurs({
                 Lien mot de passe
               </button>
             )}
+            {u.active && (
+              <button
+                className="fin-btn blanc petit"
+                onClick={() =>
+                  confirm(
+                    `Réinitialiser l'accès de « ${titreCompte(u)} » ?\n\nLe mot de passe et l'Authenticator sont effacés : à la prochaine connexion, il faudra l'identifiant actuel (${u.identifiant}) et le mot de passe temporaire universel, puis le nom et un nouveau mot de passe.${u.id === moiId ? "\n\nATTENTION : c'est votre propre compte, vous serez déconnecté(e)." : ""}`,
+                  ) && modifier(u.id, { reinitialiserAcces: true })
+                }
+              >
+                Réinitialiser l&apos;accès
+              </button>
+            )}
             {u.id !== moiId && (
               <button className={`fin-btn petit ${u.actif ? "non" : "blanc"}`} onClick={() => modifier(u.id, { actif: !u.actif })}>
                 {u.actif ? "Désactiver" : "Réactiver"}
@@ -380,7 +392,8 @@ export default function Utilisateurs({
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
         >
           <span>
-            <b>Organigramme VH</b> : {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer
+            <b className="fin-titre-note">Organigramme VH</b>
+            {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer
             (8 ministères, leurs départements ; courriel identifiant@evhnb.ca).
           </span>
           <button className="fin-btn accent petit" disabled={charge} onClick={chargerOrganigramme}>

@@ -33,16 +33,30 @@ export default async function UtilisateursPage() {
   return (
     <>
       <h1>Utilisateurs</h1>
-      <p className="sous">
-        <b>Administrateur</b> = un ministère (approuve en premier les demandes de ses départements) · <b>Utilisateur</b> = un
-        département (fait les demandes) · <b>Super administrateur</b> = finances et gestion des comptes. Le nom de la personne
-        responsable est saisi par elle-même à sa première connexion ; vous pouvez le modifier à tout moment.
-      </p>
+      <ul className="fin-legende">
+        <li>
+          <b>Administrateur</b>
+          Un ministère : approuve en premier les demandes de ses départements.
+        </li>
+        <li>
+          <b>Utilisateur</b>
+          Un département : fait les demandes.
+        </li>
+        <li>
+          <b>Super administrateur</b>
+          Finances et gestion des comptes.
+        </li>
+        <li>
+          <b>Nom de la personne</b>
+          Saisi par elle-même à sa première connexion ; vous pouvez le modifier à tout moment.
+        </li>
+      </ul>
       <div className="fin-note">
-        🔑 <b>Mot de passe temporaire universel</b> (première connexion) :{" "}
+        <b className="fin-titre-note">🔑 Mot de passe temporaire universel</b>
         <code style={{ fontSize: 16, fontWeight: 800, userSelect: "all" }}>{await mdpTemporaire()}</code>
         <br />
-        Chaque personne se connecte avec son <b>identifiant</b> et ce mot de passe, puis crée son propre mot de passe. <Link href="/reglages">Modifier</Link>
+        Pour la première connexion : chaque personne se connecte avec son identifiant et ce mot de passe, puis crée son propre mot de
+        passe. <Link href="/reglages">Modifier</Link>
       </div>
       <Utilisateurs
         lignes={lignes}
