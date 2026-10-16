@@ -6,7 +6,7 @@ import DemandeListe from "./components/DemandeListe";
 
 export const dynamic = "force-dynamic";
 
-const avecDemandeur = { demandeur: { select: { prenom: true, nom: true } } } as const;
+const avecDemandeur = { demandeur: { select: { prenom: true, nom: true, ministere: true, departement: true } } } as const;
 
 export default async function TableauDeBord() {
   const moi = await exigerUtilisateur();

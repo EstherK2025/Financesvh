@@ -5,7 +5,8 @@ import { courrielInvitation, lienFinances } from "@/lib/fin-email";
 import { ROLES, courrielParDefaut, normaliserIdentifiant, problemeIdentifiant, nomUtilisateur } from "@/lib/finances";
 import { organisationDe } from "@/lib/fin-comptes";
 
-// Création d'un compte (super admin) + envoi du lien d'activation.
+// Création d'un compte (super admin). Le nom de la personne est facultatif :
+// à défaut, elle l'indique à sa première connexion.
 export async function POST(req: Request) {
   const moi = await utilisateurCourant();
   if (moi?.role !== "superadmin") return NextResponse.json({ error: "Réservé au super administrateur." }, { status: 403 });
@@ -13,7 +14,6 @@ export async function POST(req: Request) {
   const prenom = String(b.prenom || "").trim().slice(0, 80);
   const nom = String(b.nom || "").trim().slice(0, 80);
   const role = String(b.role || "utilisateur");
-  if (!prenom || !nom) return NextResponse.json({ error: "Prénom et nom requis." }, { status: 400 });
   if (!(role in ROLES)) return NextResponse.json({ error: "Niveau invalide." }, { status: 400 });
   const identifiant = normaliserIdentifiant(b.identifiant);
   const pbId = problemeIdentifiant(identifiant);

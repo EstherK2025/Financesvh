@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { FIN, ROLES, type Role } from "@/lib/finances";
 import Logo from "./Logo";
 
-type Props = { utilisateur: { prenom: string; nom: string; role: Role } | null };
+type Props = { utilisateur: { nom: string; role: Role } | null };
 
 export default function FinNav({ utilisateur }: Props) {
   const path = usePathname();
@@ -42,7 +42,7 @@ export default function FinNav({ utilisateur }: Props) {
         {utilisateur && (
           <div className="fin-qui">
             <span>
-              {utilisateur.prenom} {utilisateur.nom}
+              {utilisateur.nom}
               <small>{ROLES[utilisateur.role]}</small>
             </span>
             <button className="fin-btn-lien" onClick={sortir}>

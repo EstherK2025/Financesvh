@@ -5,12 +5,16 @@ import { suiteApresMotDePasse } from "@/lib/fin-connexion";
 import { mdpTemporaire } from "@/lib/fin-reglages";
 import { problemeMotDePasse } from "@/lib/finances";
 
-// Première connexion : la personne crée SON mot de passe, puis est connectée
+// Première connexion : la personne indique son prénom et son nom (responsable
+// du ministère / département) et crée SON mot de passe, puis est connectée
 // (ou configure son application Authenticator si la double authentification est activée).
 export async function POST(req: Request) {
   const u = await comptePremiere();
   if (!u) return NextResponse.json({ error: "Session expirée. Reconnectez-vous avec le mot de passe temporaire." }, { status: 401 });
   const b = await req.json().catch(() => ({}));
+  const prenom = String(b.prenom ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+  const nom = String(b.nom ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+  if (!prenom || !nom) return NextResponse.json({ error: "Indiquez votre prénom et votre nom." }, { status: 400 });
   const mdp = String(b.motDePasse || "");
   const pb = problemeMotDePasse(mdp);
   if (pb) return NextResponse.json({ error: pb }, { status: 400 });
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
 
   const maj = await prisma.finUtilisateur.update({
     where: { id: u.id },
-    data: { motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
+    data: { prenom, nom, motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
   });
   await fermerPremiere();
   return NextResponse.json(await suiteApresMotDePasse(maj));

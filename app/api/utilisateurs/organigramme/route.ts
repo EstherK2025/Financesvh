@@ -7,6 +7,7 @@ import { courrielParDefaut } from "@/lib/finances";
 // Crée d'un coup les comptes de l'organigramme VH (super administrateur).
 // Idempotent : un compte dont l'identifiant existe déjà n'est pas recréé, et un
 // ministère qui a déjà un administrateur garde le sien.
+// Le nom de la personne reste vide : elle le saisit à sa première connexion.
 // Courriel de chaque compte : identifiant@evhnb.ca. Première connexion avec le
 // mot de passe temporaire universel (affiché dans Réglages et Utilisateurs).
 export async function POST() {
@@ -36,7 +37,7 @@ export async function POST() {
       await completer(admin);
     } else {
       admin = await prisma.finUtilisateur.create({
-        data: { prenom: "Ministère", nom: m.titre, identifiant: m.identifiant, courriel: await courrielLibre(m.identifiant), role: "admin", ministere: m.nom },
+        data: { prenom: "", nom: "", identifiant: m.identifiant, courriel: await courrielLibre(m.identifiant), role: "admin", ministere: m.nom },
       });
       crees++;
     }
@@ -49,8 +50,8 @@ export async function POST() {
       }
       await prisma.finUtilisateur.create({
         data: {
-          prenom: "Département",
-          nom: dep.nom,
+          prenom: "",
+          nom: "",
           identifiant: dep.identifiant,
           courriel: await courrielLibre(dep.identifiant),
           role: "utilisateur",

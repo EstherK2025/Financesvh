@@ -7,7 +7,7 @@ import { appeler } from "../components/api";
 import { ChampsMotDePasse } from "../activer/[jeton]/ActiverForm";
 
 type Etape = "mdp" | "premiere" | "enrolement" | "code";
-type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; prenom?: string };
+type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; compte?: string; prenom?: string; nom?: string };
 
 // Connexion : identifiant + mot de passe, puis (si la double authentification
 // est activée) code de l'application Authenticator.
@@ -17,7 +17,9 @@ export default function ConnexionForm() {
   const [etape, setEtape] = useState<Etape>("mdp");
   const [identifiant, setIdentifiant] = useState("");
   const [mdp, setMdp] = useState("");
+  const [compte, setCompte] = useState("");
   const [prenom, setPrenom] = useState("");
+  const [nomFamille, setNomFamille] = useState("");
   const [nouveau, setNouveau] = useState("");
   const [nouveau2, setNouveau2] = useState("");
   const [code, setCode] = useState("");
@@ -32,7 +34,11 @@ export default function ConnexionForm() {
       window.location.href = "/";
       return;
     }
-    if (s.etape === "premiere") setPrenom(s.prenom || "");
+    if (s.etape === "premiere") {
+      setCompte(s.compte || "");
+      setPrenom(s.prenom || "");
+      setNomFamille(s.nom || "");
+    }
     setEtape(s.etape);
   }
 
@@ -63,11 +69,14 @@ export default function ConnexionForm() {
 
   async function creerMotDePasse(e: React.FormEvent) {
     e.preventDefault();
-    const pb = problemeMotDePasse(nouveau) || (nouveau !== nouveau2 ? "Les deux mots de passe ne correspondent pas." : null);
+    const pb =
+      (!prenom.trim() || !nomFamille.trim() ? "Indiquez votre prénom et votre nom." : null) ||
+      problemeMotDePasse(nouveau) ||
+      (nouveau !== nouveau2 ? "Les deux mots de passe ne correspondent pas." : null);
     if (pb) return setErreur(pb);
     setCharge(true);
     setErreur("");
-    const r = await appeler<Suite>("/api/auth/premiere", { json: { motDePasse: nouveau } });
+    const r = await appeler<Suite>("/api/auth/premiere", { json: { motDePasse: nouveau, prenom, nom: nomFamille } });
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
     setNouveau("");
@@ -108,10 +117,20 @@ export default function ConnexionForm() {
     return (
       <form className="fin-carte" onSubmit={creerMotDePasse}>
         <div className="fin-note">
-          👋 Bienvenue {prenom} ! C&apos;est votre <b>première connexion</b> : créez votre propre mot de passe. Le mot de passe
-          temporaire ne fonctionnera plus pour votre compte.
+          👋 Bienvenue ! C&apos;est la <b>première connexion</b> du compte <b>{compte}</b>. Indiquez votre nom (responsable de ce
+          compte) et créez votre propre mot de passe. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
+        <div className="fin-grille2">
+          <label className="fin-champ">
+            <span>Prénom (ou titre + prénom)</span>
+            <input className="fin-input" required autoComplete="given-name" placeholder="Ex. AP Cindy" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
+          </label>
+          <label className="fin-champ">
+            <span>Nom</span>
+            <input className="fin-input" required autoComplete="family-name" value={nomFamille} onChange={(e) => setNomFamille(e.target.value)} />
+          </label>
+        </div>
         <ChampsMotDePasse mdp={nouveau} setMdp={setNouveau} mdp2={nouveau2} setMdp2={setNouveau2} libelle="Nouveau mot de passe" />
         <button className="fin-btn plein" disabled={charge}>
           {charge ? "…" : "Enregistrer mon mot de passe"}

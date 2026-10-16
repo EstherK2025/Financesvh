@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { egalConstant, ouvrirPremiere, trouverCompte, verifierMotDePasse, MAX_ECHECS, DUREE_VERROU_MS } from "@/lib/fin-auth";
 import { suiteApresMotDePasse } from "@/lib/fin-connexion";
 import { mdpTemporaire } from "@/lib/fin-reglages";
-import { nomUtilisateur } from "@/lib/finances";
+import { libelleCompte } from "@/lib/finances";
 
 // Étape 1 : identifiant (ou courriel) + mot de passe.
 //  • Première connexion (aucun mot de passe choisi) → le mot de passe temporaire
@@ -36,7 +36,13 @@ export async function POST(req: Request) {
 
   if (premiere) {
     await ouvrirPremiere(u.id);
-    return NextResponse.json({ ok: true, etape: "premiere", prenom: nomUtilisateur(u) });
+    return NextResponse.json({
+      ok: true,
+      etape: "premiere",
+      compte: libelleCompte(u),
+      prenom: u.prenom,
+      nom: u.nom,
+    });
   }
   return NextResponse.json(await suiteApresMotDePasse(u));
 }

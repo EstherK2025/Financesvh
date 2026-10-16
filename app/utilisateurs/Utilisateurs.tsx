@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
+import { ROLES } from "@/lib/finances";
 import { ORGANIGRAMME } from "@/lib/organigramme";
 import { appeler } from "../components/api";
 
@@ -11,7 +12,8 @@ const rang = (identifiant: string) => {
   const j = ORGANIGRAMME[i].departements.findIndex((d) => d.identifiant === identifiant);
   return i * 100 + j;
 };
-const trier = (a: LigneUtilisateur, b: LigneUtilisateur) => rang(a.identifiant) - rang(b.identifiant) || `${a.prenom} ${a.nom}`.localeCompare(`${b.prenom} ${b.nom}`, "fr");
+const trier = (a: LigneUtilisateur, b: LigneUtilisateur) =>
+  rang(a.identifiant) - rang(b.identifiant) || (a.departement || a.ministere).localeCompare(b.departement || b.ministere, "fr");
 
 export type LigneUtilisateur = {
   id: string;
@@ -26,36 +28,86 @@ export type LigneUtilisateur = {
   active: boolean; // mot de passe choisi
   authenticator: boolean; // application Authenticator configurée
   leaderId: string;
+  nbDemandes: number;
   derniereConnexion: string;
 };
 
-type Nouveau = { role: string; ministere: string; departement: string; leaderId: string; prenom: string; nom: string; identifiant: string; courriel: string };
-const vide = (role: string, leaderId = ""): Nouveau => ({ role, ministere: "", departement: "", leaderId, prenom: "", nom: "", identifiant: "", courriel: "" });
+// Valeurs du formulaire (création ou modification d'un compte).
+type Champs = {
+  role: string;
+  ministere: string;
+  departement: string;
+  leaderId: string;
+  prenom: string;
+  nom: string;
+  identifiant: string;
+  courriel: string;
+};
+const vide = (role: string, leaderId = ""): Champs => ({
+  role,
+  ministere: "",
+  departement: "",
+  leaderId,
+  prenom: "",
+  nom: "",
+  identifiant: "",
+  courriel: "",
+});
+const depuis = (u: LigneUtilisateur): Champs => ({
+  role: u.role,
+  ministere: u.ministere,
+  departement: u.departement,
+  leaderId: u.leaderId,
+  prenom: u.prenom,
+  nom: u.nom,
+  identifiant: u.identifiant,
+  courriel: u.courriel,
+});
+
+const nomPersonne = (u: { prenom: string; nom: string }) => `${u.prenom} ${u.nom}`.trim();
+const titreCompte = (u: LigneUtilisateur) =>
+  u.role === "admin"
+    ? `Ministère ${u.ministere}`
+    : u.departement
+      ? `Département ${u.departement}`
+      : u.role === "superadmin"
+        ? "Super administrateur"
+        : "Utilisateur";
 
 type InfoOrganigramme = { total: number; manquants: number };
 
-export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: LigneUtilisateur[]; moiId: string; organigramme: InfoOrganigramme }) {
-  const [form, setForm] = useState<Nouveau | null>(null); // formulaire d'ajout ouvert
+export default function Utilisateurs({
+  lignes,
+  moiId,
+  organigramme,
+}: {
+  lignes: LigneUtilisateur[];
+  moiId: string;
+  organigramme: InfoOrganigramme;
+}) {
+  // Formulaire ouvert : création (id = "nouveau") ou modification d'un compte.
+  const [form, setForm] = useState<{ id: string; champs: Champs } | null>(null);
   const [erreur, setErreur] = useState("");
-  const [lien, setLien] = useState<{ nom: string; url: string; parCourriel: boolean } | null>(null);
+  const [lien, setLien] = useState<{ nom: string; url: string } | null>(null);
   const [info, setInfo] = useState("");
   const [charge, setCharge] = useState(false);
 
   const supers = lignes.filter((u) => u.role === "superadmin");
   const ministeres = lignes.filter((u) => u.role === "admin").sort(trier);
-  const sansMinistere = lignes.filter((u) => u.role === "utilisateur" && !ministeres.some((m) => m.id === u.leaderId));
+  const sansMinistere = lignes.filter((u) => u.role === "utilisateur" && !ministeres.some((m) => m.id === u.leaderId)).sort(trier);
 
-  async function creer(e: React.FormEvent) {
+  async function enregistrer(e: React.FormEvent) {
     e.preventDefault();
     if (!form) return;
     setErreur("");
     setCharge(true);
-    const r = await appeler<{ lien: string }>("/api/utilisateurs", { json: form });
+    const r =
+      form.id === "nouveau"
+        ? await appeler("/api/utilisateurs", { json: form.champs })
+        : await appeler(`/api/utilisateurs/${form.id}`, { method: "PATCH", json: form.champs });
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
-    setLien({ nom: `${form.prenom} ${form.nom}`, url: r.data.lien, parCourriel: Boolean(form.courriel) });
-    setForm(null);
-    setTimeout(() => window.location.reload(), 50);
+    window.location.reload();
   }
 
   async function modifier(id: string, data: Record<string, unknown>) {
@@ -65,11 +117,19 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
     window.location.reload();
   }
 
+  async function supprimer(u: LigneUtilisateur) {
+    if (!confirm(`Supprimer définitivement le compte « ${titreCompte(u)} »${nomPersonne(u) ? ` (${nomPersonne(u)})` : ""} ?`)) return;
+    setErreur("");
+    const r = await appeler(`/api/utilisateurs/${u.id}`, { method: "DELETE" });
+    if (!r.ok) return setErreur(r.erreur);
+    window.location.reload();
+  }
+
   async function inviter(u: LigneUtilisateur) {
     setErreur("");
     const r = await appeler<{ lien: string }>(`/api/utilisateurs/${u.id}`, { method: "POST" });
     if (!r.ok) return setErreur(r.erreur);
-    setLien({ nom: `${u.prenom} ${u.nom}`, url: r.data.lien, parCourriel: Boolean(u.courriel) });
+    setLien({ nom: nomPersonne(u) || titreCompte(u), url: r.data.lien });
     try {
       await navigator.clipboard.writeText(r.data.lien);
       setInfo("Lien copié : collez-le dans WhatsApp ou un SMS.");
@@ -82,51 +142,104 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
     if (!confirm(`Créer les ${organigramme.manquants} comptes manquants de l'organigramme (ministères et départements) ?`)) return;
     setErreur("");
     setCharge(true);
-    const r = await appeler<{ crees: number }>("/api/utilisateurs/organigramme");
+    const r = await appeler("/api/utilisateurs/organigramme");
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
     window.location.reload();
   }
 
-  function renommer(u: LigneUtilisateur, champ: "ministere" | "departement") {
-    const v = prompt(champ === "ministere" ? "Nouveau nom du ministère" : "Nom du département", u[champ]);
-    if (v !== null && v.trim() !== u[champ]) modifier(u.id, { [champ]: v });
-  }
+  const ouvrir = (id: string, champs: Champs) => {
+    setErreur("");
+    setForm({ id, champs });
+    setTimeout(() => document.getElementById("fin-form-compte")?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+  };
 
-  const formulaire = (titre: string) =>
-    form && (
-      <form className="fin-carte" onSubmit={creer} style={{ marginTop: 10, borderColor: "var(--fin-primaire)" }}>
-        <h2 style={{ marginTop: 0 }}>{titre}</h2>
-        {form.role === "admin" && (
+  // Formulaire commun : création et modification.
+  const formulaire = () => {
+    if (!form) return null;
+    const c = form.champs;
+    const maj = (k: keyof Champs, v: string) => setForm({ ...form, champs: { ...c, [k]: v } });
+    const creation = form.id === "nouveau";
+    const soiMeme = form.id === moiId;
+    return (
+      <form
+        id="fin-form-compte"
+        className="fin-carte"
+        onSubmit={enregistrer}
+        style={{ margin: "10px 0", borderColor: "var(--fin-primaire)" }}
+      >
+        <h2 style={{ marginTop: 0 }}>{creation ? "Nouveau compte" : "Modifier le compte"}</h2>
+        <label className="fin-champ">
+          <span>Niveau</span>
+          <select className="fin-input" value={c.role} disabled={soiMeme} onChange={(e) => maj("role", e.target.value)}>
+            {Object.entries(ROLES).map(([k, l]) => (
+              <option key={k} value={k}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        {c.role === "admin" && (
           <label className="fin-champ">
             <span>Nom du ministère *</span>
-            <input className="fin-input" required autoFocus value={form.ministere} onChange={(e) => setForm({ ...form, ministere: e.target.value })} />
+            <input
+              className="fin-input"
+              required
+              value={c.ministere}
+              onChange={(e) => maj("ministere", e.target.value)}
+              placeholder="Ex. Intégration"
+            />
           </label>
         )}
-        {form.role === "utilisateur" && (
-          <label className="fin-champ">
-            <span>Nom du département *</span>
-            <input className="fin-input" required autoFocus value={form.departement} onChange={(e) => setForm({ ...form, departement: e.target.value })} />
-          </label>
+        {c.role === "utilisateur" && (
+          <div className="fin-grille2">
+            <label className="fin-champ">
+              <span>Ministère</span>
+              <select className="fin-input" value={c.leaderId} onChange={(e) => maj("leaderId", e.target.value)}>
+                <option value="">Sans ministère (directement aux finances)</option>
+                {ministeres
+                  .filter((m) => m.id !== form.id)
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.ministere}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="fin-champ">
+              <span>Nom du département</span>
+              <input
+                className="fin-input"
+                value={c.departement}
+                onChange={(e) => maj("departement", e.target.value)}
+                placeholder="Ex. Tribus"
+              />
+            </label>
+          </div>
         )}
         <div className="fin-grille2">
           <label className="fin-champ">
-            <span>Prénom (ou titre + prénom)</span>
-            <input className="fin-input" required value={form.prenom} onChange={(e) => setForm({ ...form, prenom: e.target.value })} placeholder="Ex. AP Cindy" />
+            <span>Prénom de la personne</span>
+            <input className="fin-input" value={c.prenom} onChange={(e) => maj("prenom", e.target.value)} placeholder="Ex. AP Cindy" />
           </label>
           <label className="fin-champ">
-            <span>Nom</span>
-            <input className="fin-input" required value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} />
+            <span>Nom de la personne</span>
+            <input className="fin-input" value={c.nom} onChange={(e) => maj("nom", e.target.value)} />
           </label>
+        </div>
+        <p style={{ fontSize: 12, color: "var(--fin-gris)", margin: "-6px 0 12px" }}>
+          Facultatif : laissés vides, la personne indique son nom à sa première connexion.
+        </p>
+        <div className="fin-grille2">
           <label className="fin-champ">
-            <span>Identifiant (pour se connecter)</span>
+            <span>Identifiant (pour se connecter) *</span>
             <input
               className="fin-input"
               autoCapitalize="none"
               autoCorrect="off"
               required
-              value={form.identifiant}
-              onChange={(e) => setForm({ ...form, identifiant: e.target.value.toLowerCase() })}
+              value={c.identifiant}
+              onChange={(e) => maj("identifiant", e.target.value.toLowerCase())}
             />
           </label>
           <label className="fin-champ">
@@ -134,16 +247,16 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
             <input
               className="fin-input"
               type="email"
-              placeholder={form.identifiant ? `${form.identifiant}@evhnb.ca` : "identifiant@evhnb.ca"}
-              value={form.courriel}
-              onChange={(e) => setForm({ ...form, courriel: e.target.value })}
+              placeholder={`${c.identifiant || "identifiant"}@evhnb.ca`}
+              value={c.courriel}
+              onChange={(e) => maj("courriel", e.target.value)}
             />
-            <em>Laisser vide : {form.identifiant || "identifiant"}@evhnb.ca.</em>
+            {creation && <em>Laisser vide : {c.identifiant || "identifiant"}@evhnb.ca.</em>}
           </label>
         </div>
         <div className="fin-actions">
           <button className="fin-btn" disabled={charge}>
-            {charge ? "…" : "Créer et envoyer l'invitation"}
+            {charge ? "…" : creation ? "Créer le compte" : "Enregistrer"}
           </button>
           <button type="button" className="fin-btn blanc" onClick={() => setForm(null)}>
             Annuler
@@ -151,76 +264,83 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
         </div>
       </form>
     );
+  };
 
-  const ligne = (u: LigneUtilisateur, libelle: React.ReactNode) => (
-    <tr key={u.id} style={{ opacity: u.actif ? 1 : 0.5 }}>
-      <td>
-        {libelle}
-        <b>
-          {u.prenom} {u.nom}
-        </b>
-        {u.id === moiId && " (moi)"}
-        <div style={{ fontSize: 11, color: "var(--fin-gris)" }}>
-          {u.identifiant ? `@${u.identifiant}` : ""}
-          {u.courriel ? ` · ${u.courriel}` : ""}
-        </div>
-      </td>
-      <td style={{ whiteSpace: "nowrap", fontSize: 12 }}>
-        {!u.actif ? "Désactivé" : u.active ? `Actif${u.derniereConnexion ? ` · vu le ${u.derniereConnexion}` : ""}` : "À activer"}
-        {u.authenticator && <div title="Application Authenticator configurée">🔐 Authenticator</div>}
-      </td>
-      <td>
-        <div className="fin-actions" style={{ justifyContent: "flex-end" }}>
+  const ligne = (u: LigneUtilisateur) => (
+    <Fragment key={u.id}>
+      <tr style={{ opacity: u.actif ? 1 : 0.5 }}>
+        <td>
           {u.role === "admin" && (
-            <button className="fin-btn blanc petit" onClick={() => renommer(u, "ministere")}>
-              Renommer
-            </button>
+            <span className="fin-tag s-approuvee" style={{ marginRight: 8 }}>
+              Administrateur
+            </span>
           )}
-          {u.role === "utilisateur" && (
-            <>
-              <button className="fin-btn blanc petit" onClick={() => renommer(u, "departement")}>
-                Département
-              </button>
-              <select
-                className="fin-input"
-                style={{ padding: "5px 8px", fontSize: 12, width: "auto", minWidth: 0 }}
-                value={u.leaderId}
-                onChange={(e) => modifier(u.id, { leaderId: e.target.value })}
-                aria-label="Ministère"
+          <b>{titreCompte(u)}</b>
+          {u.id === moiId && " (moi)"}
+          <div style={{ fontSize: 13 }}>
+            {nomPersonne(u) || <i style={{ color: "var(--fin-gris)" }}>Nom à compléter (première connexion)</i>}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--fin-gris)" }}>
+            {u.identifiant ? `@${u.identifiant}` : ""}
+            {u.courriel ? ` · ${u.courriel}` : ""}
+          </div>
+        </td>
+        <td style={{ whiteSpace: "nowrap", fontSize: 12 }}>
+          {!u.actif
+            ? "Désactivé"
+            : u.active
+              ? `Actif${u.derniereConnexion ? ` · vu le ${u.derniereConnexion}` : ""}`
+              : "Première connexion à faire"}
+          {u.authenticator && <div title="Application Authenticator configurée">🔐 Authenticator</div>}
+        </td>
+        <td>
+          <div className="fin-actions" style={{ justifyContent: "flex-end" }}>
+            <button className="fin-btn petit" onClick={() => ouvrir(u.id, depuis(u))}>
+              Modifier
+            </button>
+            {u.authenticator && (
+              <button
+                className="fin-btn blanc petit"
+                onClick={() =>
+                  confirm(
+                    `Réinitialiser l'Authenticator de « ${titreCompte(u)} » ? (téléphone perdu ou changé : un nouveau QR code sera proposé à la prochaine connexion)`,
+                  ) && modifier(u.id, { reinitialiserAuthenticator: true })
+                }
               >
-                <option value="">Sans ministère</option>
-                {ministeres.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.ministere}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
-          {u.authenticator && (
-            <button
-              className="fin-btn blanc petit"
-              onClick={() =>
-                confirm(`Réinitialiser l'Authenticator de ${u.prenom} ${u.nom} ? (téléphone perdu ou changé : un nouveau QR code lui sera proposé à sa prochaine connexion)`) &&
-                modifier(u.id, { reinitialiserAuthenticator: true })
-              }
-            >
-              Réinit. Authenticator
-            </button>
-          )}
-          {u.actif && (
-            <button className="fin-btn blanc petit" onClick={() => inviter(u)}>
-              {u.active ? "Lien mot de passe" : "Lien d'activation"}
-            </button>
-          )}
-          {u.id !== moiId && (
-            <button className={`fin-btn petit ${u.actif ? "non" : "blanc"}`} onClick={() => modifier(u.id, { actif: !u.actif })}>
-              {u.actif ? "Désactiver" : "Réactiver"}
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
+                Réinit. Authenticator
+              </button>
+            )}
+            {u.actif && u.active && (
+              <button className="fin-btn blanc petit" onClick={() => inviter(u)}>
+                Lien mot de passe
+              </button>
+            )}
+            {u.id !== moiId && (
+              <button className={`fin-btn petit ${u.actif ? "non" : "blanc"}`} onClick={() => modifier(u.id, { actif: !u.actif })}>
+                {u.actif ? "Désactiver" : "Réactiver"}
+              </button>
+            )}
+            {u.id !== moiId && (
+              <button
+                className="fin-btn non petit"
+                onClick={() => supprimer(u)}
+                disabled={u.nbDemandes > 0}
+                title={
+                  u.nbDemandes > 0 ? "Ce compte a fait des demandes : désactivez-le plutôt (historique financier)." : "Supprimer le compte"
+                }
+              >
+                Supprimer
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+      {form?.id === u.id && (
+        <tr>
+          <td colSpan={3}>{formulaire()}</td>
+        </tr>
+      )}
+    </Fragment>
   );
 
   const tableau = (lignesT: React.ReactNode[]) => (
@@ -236,15 +356,7 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
       {erreur && <div className="fin-erreur">{erreur}</div>}
       {lien && (
         <div className="fin-succes">
-          {lien.parCourriel ? (
-            <>
-              Lien envoyé par courriel à <b>{lien.nom}</b>. Vous pouvez aussi le lui transmettre directement :
-            </>
-          ) : (
-            <>
-              Lien d&apos;activation de <b>{lien.nom}</b> à lui transmettre (WhatsApp, SMS…) :
-            </>
-          )}
+          Lien pour choisir un nouveau mot de passe — <b>{lien.nom}</b> (à transmettre par WhatsApp, SMS…) :
           <br />
           <code>{lien.url}</code>
           {info && <div style={{ marginTop: 6, fontWeight: 700 }}>{info}</div>}
@@ -252,10 +364,13 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
       )}
 
       {organigramme.manquants > 0 && (
-        <div className="fin-note" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div
+          className="fin-note"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
+        >
           <span>
-            <b>Organigramme VH</b> : {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer (8
-            ministères, leurs départements ; courriel identifiant@evhnb.ca).
+            <b>Organigramme VH</b> : {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer
+            (8 ministères, leurs départements ; courriel identifiant@evhnb.ca).
           </span>
           <button className="fin-btn accent petit" disabled={charge} onClick={chargerOrganigramme}>
             {charge ? "…" : "Créer les comptes de l'organigramme"}
@@ -264,29 +379,32 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
       )}
 
       <div className="fin-actions">
-        <button className="fin-btn" onClick={() => setForm(vide("admin"))}>
-          + Ajouter un ministère
+        <button className="fin-btn" onClick={() => ouvrir("nouveau", vide("utilisateur"))}>
+          + Ajouter un compte
         </button>
       </div>
-      {form?.role === "admin" && formulaire("Nouveau ministère (compte administrateur)")}
+      {form?.id === "nouveau" && formulaire()}
 
-      {ministeres.length === 0 && <div className="fin-vide" style={{ marginTop: 14 }}>Aucun ministère pour l&apos;instant.</div>}
+      {ministeres.length === 0 && (
+        <div className="fin-vide" style={{ marginTop: 14 }}>
+          Aucun ministère pour l&apos;instant.
+        </div>
+      )}
 
       {ministeres.map((m) => {
         const deps = lignes.filter((u) => u.role === "utilisateur" && u.leaderId === m.id).sort(trier);
         return (
           <section key={m.id} className="fin-ministere">
             <h2>
-              {m.ministere} <span>{deps.length} département{deps.length > 1 ? "s" : ""}</span>
+              {m.ministere}{" "}
+              <span>
+                {deps.length} département{deps.length > 1 ? "s" : ""}
+              </span>
             </h2>
-            {tableau([
-              ligne(m, <span className="fin-tag s-approuvee" style={{ marginRight: 8 }}>Administrateur</span>),
-              ...deps.map((d) => ligne(d, null)),
-            ])}
-            <button className="fin-btn blanc petit" style={{ marginTop: 8 }} onClick={() => setForm(vide("utilisateur", m.id))}>
-              + Ajouter un département
+            {tableau([ligne(m), ...deps.map(ligne)])}
+            <button className="fin-btn blanc petit" style={{ marginTop: 8 }} onClick={() => ouvrir("nouveau", vide("utilisateur", m.id))}>
+              + Ajouter un département à {m.ministere}
             </button>
-            {form?.role === "utilisateur" && form.leaderId === m.id && formulaire(`Nouveau département — ${m.ministere}`)}
           </section>
         );
       })}
@@ -294,17 +412,13 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
       {sansMinistere.length > 0 && (
         <section className="fin-ministere">
           <h2>Utilisateurs sans ministère</h2>
-          {tableau(sansMinistere.map((u) => ligne(u, u.departement ? <span className="fin-tag s-annulee" style={{ marginRight: 8 }}>{u.departement}</span> : null)))}
+          {tableau(sansMinistere.map(ligne))}
         </section>
       )}
 
       <section className="fin-ministere">
         <h2>Super administrateur</h2>
-        {tableau(supers.map((u) => ligne(u, null)))}
-        <button className="fin-btn blanc petit" style={{ marginTop: 8 }} onClick={() => setForm(vide("superadmin"))}>
-          + Ajouter un super administrateur
-        </button>
-        {form?.role === "superadmin" && formulaire("Nouveau super administrateur")}
+        {tableau(supers.map(ligne))}
       </section>
     </>
   );

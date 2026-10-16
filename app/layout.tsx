@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { FIN } from "@/lib/finances";
+import { FIN, nomUtilisateur } from "@/lib/finances";
 import { utilisateurCourant } from "@/lib/fin-auth";
 import FinNav from "./components/FinNav";
 
@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="fr">
       <body className={inter.className}>
         <div className="fin">
-          <FinNav utilisateur={moi ? { prenom: moi.prenom, nom: moi.nom, role: moi.role } : null} />
+          <FinNav utilisateur={moi ? { nom: nomUtilisateur(moi), role: moi.role } : null} />
           <main className="fin-main">{children}</main>
           <footer className="fin-footer">
             {FIN.organisation} · {FIN.nom} · Accès réservé

@@ -11,6 +11,7 @@ export default async function UtilisateursPage() {
   const moi = await exigerUtilisateur(true);
   const liste = await prisma.finUtilisateur.findMany({
     orderBy: [{ actif: "desc" }, { ministere: "asc" }, { departement: "asc" }, { prenom: "asc" }],
+    include: { _count: { select: { demandes: true } } },
   });
   const lignes: LigneUtilisateur[] = liste.map((u) => ({
     id: u.id,
@@ -25,6 +26,7 @@ export default async function UtilisateursPage() {
     active: Boolean(u.motDePasse),
     authenticator: u.totpActif,
     leaderId: u.leaderId || "",
+    nbDemandes: u._count.demandes,
     derniereConnexion: u.derniereConnexion ? u.derniereConnexion.toLocaleDateString("fr-CA") : "",
   }));
   return (
@@ -32,7 +34,8 @@ export default async function UtilisateursPage() {
       <h1>Utilisateurs</h1>
       <p className="sous">
         <b>Administrateur</b> = un ministère (approuve en premier les demandes de ses départements) · <b>Utilisateur</b> = un
-        département (fait les demandes) · <b>Super administrateur</b> = finances et gestion des comptes.
+        département (fait les demandes) · <b>Super administrateur</b> = finances et gestion des comptes. Le nom de la personne
+        responsable est saisi par elle-même à sa première connexion ; vous pouvez le modifier à tout moment.
       </p>
       <div className="fin-note">
         🔑 <b>Mot de passe temporaire universel</b> (première connexion) :{" "}

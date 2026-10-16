@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TYPES, formatMontant, reference, type TypeDemande } from "@/lib/finances";
+import { TYPES, formatMontant, nomUtilisateur, reference, type NomCompte, type TypeDemande } from "@/lib/finances";
 import StatutTag from "./StatutTag";
 
 export type LigneDemande = {
@@ -11,7 +11,7 @@ export type LigneDemande = {
   montant: number;
   statut: string;
   createdAt: Date;
-  demandeur?: { prenom: string; nom: string };
+  demandeur?: NomCompte;
 };
 
 export default function DemandeListe({ demandes, avecDemandeur = false, vide }: { demandes: LigneDemande[]; avecDemandeur?: boolean; vide: string }) {
@@ -37,7 +37,7 @@ export default function DemandeListe({ demandes, avecDemandeur = false, vide }: 
                 <Link href={`/demande/${d.id}`}>{reference(d.numero)}</Link>
               </td>
               <td style={{ whiteSpace: "nowrap" }}>{d.createdAt.toLocaleDateString("fr-CA")}</td>
-              {avecDemandeur && <td>{d.demandeur ? `${d.demandeur.prenom} ${d.demandeur.nom}` : ""}</td>}
+              {avecDemandeur && <td>{d.demandeur ? nomUtilisateur(d.demandeur) : ""}</td>}
               <td>{TYPES[d.type as TypeDemande] || d.type}</td>
               <td>
                 <Link href={`/demande/${d.id}`} style={{ fontWeight: 600 }}>

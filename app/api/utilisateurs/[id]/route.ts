@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, fermerSessionsDe, utilisateurCourant } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { ROLES, nomUtilisateur } from "@/lib/finances";
+import { ROLES, nomUtilisateur, normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
 import { organisationDe } from "@/lib/fin-comptes";
 
-// Modifier un compte (super admin) : { prenom?, nom?, role?, ministere?, departement?, leaderId?, actif?, reinitialiserAuthenticator? }
+// Modifier un compte (super admin) :
+// { prenom?, nom?, identifiant?, courriel?, role?, ministere?, departement?, leaderId?, actif?, reinitialiserAuthenticator? }
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const moi = await utilisateurCourant();
   if (moi?.role !== "superadmin") return NextResponse.json({ error: "Réservé au super administrateur." }, { status: 403 });
@@ -15,8 +16,24 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const b = await req.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
 
-  if (b.prenom !== undefined) data.prenom = String(b.prenom).trim().slice(0, 80) || u.prenom;
-  if (b.nom !== undefined) data.nom = String(b.nom).trim().slice(0, 80) || u.nom;
+  // Nom de la personne : modifiable, ou vidé (elle le ressaisira).
+  if (b.prenom !== undefined) data.prenom = String(b.prenom).trim().replace(/\s+/g, " ").slice(0, 80);
+  if (b.nom !== undefined) data.nom = String(b.nom).trim().replace(/\s+/g, " ").slice(0, 80);
+  if (b.identifiant !== undefined) {
+    const identifiant = normaliserIdentifiant(b.identifiant);
+    const pb = problemeIdentifiant(identifiant);
+    if (pb) return NextResponse.json({ error: pb }, { status: 400 });
+    const autre = await prisma.finUtilisateur.findUnique({ where: { identifiant } });
+    if (autre && autre.id !== id) return NextResponse.json({ error: `L'identifiant « ${identifiant} » est déjà pris.` }, { status: 409 });
+    data.identifiant = identifiant;
+  }
+  if (b.courriel !== undefined) {
+    const courriel = String(b.courriel).trim().toLowerCase().slice(0, 160);
+    if (courriel && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel)) return NextResponse.json({ error: "Courriel invalide." }, { status: 400 });
+    const autre = courriel ? await prisma.finUtilisateur.findUnique({ where: { courriel } }) : null;
+    if (autre && autre.id !== id) return NextResponse.json({ error: "Ce courriel est déjà utilisé par un autre compte." }, { status: 409 });
+    data.courriel = courriel || null;
+  }
   const role = b.role !== undefined ? String(b.role) : u.role;
   if (!(role in ROLES)) return NextResponse.json({ error: "Niveau invalide." }, { status: 400 });
   if (id === moi.id && role !== "superadmin")
@@ -63,4 +80,28 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const jeton = await creerJetonCompte(u.id);
   await courrielInvitation(u.courriel, nomUtilisateur(u), jeton, Boolean(u.motDePasse));
   return NextResponse.json({ ok: true, lien: lienFinances(`/activer/${jeton}`) });
+}
+
+// Supprimer un compte (super admin). Un compte qui a fait des demandes ne peut
+// pas être supprimé (l'historique financier doit rester) : le désactiver.
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const moi = await utilisateurCourant();
+  if (moi?.role !== "superadmin") return NextResponse.json({ error: "Réservé au super administrateur." }, { status: 403 });
+  const { id } = await params;
+  if (id === moi.id) return NextResponse.json({ error: "Vous ne pouvez pas supprimer votre propre compte." }, { status: 400 });
+  const u = await prisma.finUtilisateur.findUnique({ where: { id }, include: { _count: { select: { demandes: true } } } });
+  if (!u) return NextResponse.json({ error: "Compte introuvable." }, { status: 404 });
+  if (u._count.demandes > 0)
+    return NextResponse.json(
+      { error: `Ce compte a fait ${u._count.demandes} demande(s) : il ne peut pas être supprimé (historique financier). Désactivez-le plutôt.` },
+      { status: 409 },
+    );
+  await prisma.$transaction(async (tx) => {
+    // Demandes qui attendaient son approbation : elles passent aux finances.
+    await tx.finDemande.updateMany({ where: { approbateurId: id, statut: "attente_leader" }, data: { statut: "attente_finances", approbateurId: null } });
+    // Ses départements (s'il administrait un ministère) se retrouvent sans ministère.
+    if (u.role === "admin") await tx.finUtilisateur.updateMany({ where: { leaderId: id }, data: { leaderId: null, ministere: null } });
+    await tx.finUtilisateur.delete({ where: { id } });
+  });
+  return NextResponse.json({ ok: true });
 }

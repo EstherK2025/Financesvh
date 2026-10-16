@@ -108,8 +108,16 @@ export function parseMontant(saisie: unknown): number | null {
   return cents > 0 && cents < 100_000_000 ? cents : null;
 }
 
-export function nomUtilisateur(u: { prenom: string; nom: string }): string {
-  return `${u.prenom} ${u.nom}`.trim();
+// Nom affiché d'un compte : le nom de la personne (saisi à sa première
+// connexion ou par le super administrateur) ; à défaut, son département ou
+// son ministère.
+export type NomCompte = { prenom: string; nom: string; ministere?: string | null; departement?: string | null };
+export function nomUtilisateur(u: NomCompte): string {
+  const n = `${u.prenom} ${u.nom}`.trim();
+  if (n) return n;
+  if (u.departement) return `Département ${u.departement}`;
+  if (u.ministere) return `Ministère ${u.ministere}`;
+  return "(nom à compléter)";
 }
 
 // ── Identifiant (nom d'utilisateur) ──
@@ -136,4 +144,12 @@ export function problemeMotDePasse(mdp: string): string | null {
 export function masquerCourriel(c: string): string {
   const [nom, dom] = c.split("@");
   return `${nom.slice(0, 2)}${"•".repeat(Math.max(1, nom.length - 2))}@${dom}`;
+}
+
+// « Département Tribus (ministère Intégration) », « Ministère Intégration »…
+export function libelleCompte(u: { role: string; ministere?: string | null; departement?: string | null; identifiant?: string | null }): string {
+  if (u.role === "admin" && u.ministere) return `Ministère ${u.ministere}`;
+  if (u.departement) return `Département ${u.departement}${u.ministere ? ` (ministère ${u.ministere})` : ""}`;
+  if (u.role === "superadmin") return "Super administrateur";
+  return u.identifiant || "Compte";
 }

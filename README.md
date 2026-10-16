@@ -39,11 +39,22 @@ Département (utilisateur) ──▶ son ministère (administrateur) ──▶ f
 | Administrateur | un **ministère** | + voir toutes les demandes de son ministère, approuver en premier celles de ses départements |
 | Super administrateur | les finances (GA Maïté — `estherk`) | + approuver aux finances, marquer payé, tout voir, créer et gérer tous les comptes |
 
-Dans **Utilisateurs**, les comptes sont rangés par ministère :
-« + Ajouter un ministère » crée le compte administrateur du ministère ;
-« + Ajouter un département » sous un ministère crée un compte utilisateur qui
-lui est rattaché (son administrateur approuve ses demandes). Un ministère n'a
-qu'un compte administrateur. Renommer un ministère met à jour ses départements.
+Dans **Utilisateurs** (super administrateur), les comptes sont rangés par
+ministère. Le super administrateur peut :
+- **ajouter** un compte (« + Ajouter un compte » ou « + Ajouter un département
+  à … ») en choisissant son **niveau** ;
+- **modifier** un compte : nom de la personne (ou l'effacer), identifiant,
+  courriel, niveau, ministère, département ;
+- **désactiver / réactiver** un compte ;
+- **supprimer** un compte. Un compte qui a déjà fait des demandes ne peut pas
+  être supprimé (historique financier) : il se désactive. Supprimer le compte
+  d'un ministère laisse ses départements « sans ministère » et envoie ses
+  demandes en attente directement aux finances.
+
+Chaque compte représente un **ministère** ou un **département**. Le **nom de la
+personne responsable** est saisi par elle-même à sa **première connexion**
+(avec son nouveau mot de passe) ; tant qu'il manque, le compte s'affiche sous
+le nom du ministère ou du département.
 
 ### Organigramme VH (8 ministères, 48 départements)
 
