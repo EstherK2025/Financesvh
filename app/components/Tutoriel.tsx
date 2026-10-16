@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Etape } from "@/lib/tutoriel";
 import Icone from "./Icone";
 
@@ -29,7 +30,9 @@ export default function Tutoriel({ etapes, onFermer }: { etapes: Etape[]; onFerm
     };
   }, [etapes.length, onFermer]);
 
-  return (
+  // Rendu directement dans <body> : une page animée (transform) ne doit pas
+  // enfermer la fenêtre plein écran.
+  return createPortal(
     <div className="fin-tuto-fond" role="dialog" aria-modal="true" aria-labelledby="fin-tuto-titre" data-pas-glisser>
       <div
         className="fin-tuto"
@@ -73,6 +76,7 @@ export default function Tutoriel({ etapes, onFermer }: { etapes: Etape[]; onFerm
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

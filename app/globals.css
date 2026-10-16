@@ -248,7 +248,7 @@ a {
 .fin-page {
   animation-duration: 340ms;
   animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
-  animation-fill-mode: both;
+  animation-fill-mode: backwards; /* pas de transform résiduel après l'animation */
 }
 .fin-entree {
   animation-name: fin-fondu;
