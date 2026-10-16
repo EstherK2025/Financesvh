@@ -18,6 +18,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(p.nom)}`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
+      // Fichier affiché isolé : aucun script ne peut s'y exécuter (les PDF
+      // gardent le lecteur du navigateur, que « sandbox » bloquerait).
+      "Content-Security-Policy":
+        p.typeMime === "application/pdf" ? "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'self'" : "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox",
     },
   });
 }

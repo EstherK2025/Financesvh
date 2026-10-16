@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fermerSessionsDe, hacherMotDePasse, utilisateurCourant } from "@/lib/fin-auth";
 import { normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
+import { journaliser } from "@/lib/fin-securite";
 
 // Compte UNIQUE d'approbateur externe (super administrateur) : identifiant et
 // mot de passe fixes, partagés. À chaque décision, la personne connectée saisit
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
       data: { ...(data as { identifiant: string; motDePasse: string }), role: "delegue", prenom: "Approbateur", nom: "externe" },
     });
   }
+  await journaliser("reglage_modifie", { utilisateurId: moi.id, detail: "Approbateur externe" });
   return NextResponse.json({ ok: true });
 }
 
@@ -48,5 +50,6 @@ export async function PATCH(req: Request) {
   if (!existant) return NextResponse.json({ error: "Compte introuvable." }, { status: 404 });
   await prisma.finUtilisateur.update({ where: { id: existant.id }, data: { actif: Boolean(b.actif) } });
   if (!b.actif) await fermerSessionsDe(existant.id);
+  await journaliser("reglage_modifie", { utilisateurId: moi.id, detail: `Approbateur externe ${b.actif ? "activé" : "désactivé"}` });
   return NextResponse.json({ ok: true });
 }

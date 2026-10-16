@@ -160,3 +160,29 @@ model FinReglage {
   typeMime  String?
   updatedAt DateTime @updatedAt
 }
+
+// Limitation des tentatives (connexion, codes, mot de passe oublié…), par
+// adresse IP et par identifiant saisi — même pour un compte inexistant, afin
+// de ne pas révéler quels comptes existent.
+model FinTentative {
+  cle          String    @id // ex. « connexion:ip:1.2.3.4 », « connexion:id:john.doe »
+  compteur     Int       @default(0)
+  debut        DateTime  @default(now()) // début de la fenêtre de comptage
+  bloqueJusqua DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@index([updatedAt])
+}
+
+// Journal de sécurité (connexions, échecs, verrouillages, changements de comptes…).
+model FinJournal {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  evenement     String
+  utilisateurId String?
+  identifiant   String?
+  ip            String?
+  detail        String?
+
+  @@index([createdAt])
+}

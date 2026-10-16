@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { utilisateurCourant } from "@/lib/fin-auth";
 import { MODES_PAIEMENT, STATUTS, TYPES, nomUtilisateur, reference } from "@/lib/finances";
+import { journaliser } from "@/lib/fin-securite";
 
 // Export CSV de toutes les demandes (super admin) — ouvrable dans Excel.
 export async function GET() {
   const moi = await utilisateurCourant();
   if (moi?.role !== "superadmin") return new Response("Réservé au super administrateur.", { status: 403 });
+  await journaliser("export", { utilisateurId: moi.id });
   const demandes = await prisma.finDemande.findMany({
     orderBy: { numero: "asc" },
     include: { demandeur: true, approbateur: true, _count: { select: { pieces: true } } },

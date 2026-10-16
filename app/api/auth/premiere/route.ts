@@ -4,6 +4,7 @@ import { comptePremiere, egalConstant, fermerPremiere, hacherMotDePasse } from "
 import { suiteApresMotDePasse } from "@/lib/fin-connexion";
 import { mdpTemporaire, titreValide } from "@/lib/fin-reglages";
 import { DOMAINE_COURRIEL, courrielParDefaut, identifiantDepuisNom, problemeIdentifiant, problemeMotDePasse, sansAccents } from "@/lib/finances";
+import { journaliser } from "@/lib/fin-securite";
 
 // Première connexion : la personne indique son prénom et son nom (responsable
 // du ministère / département) et crée SON mot de passe. Son identifiant devient
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
       data: { motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
     });
     await fermerPremiere();
+    await journaliser("mdp_change", { utilisateurId: u.id, identifiant: u.identifiant, detail: "Après réinitialisation" });
     return NextResponse.json(await suiteApresMotDePasse(maj));
   }
 
@@ -54,5 +56,6 @@ export async function POST(req: Request) {
     data: { nomConfirme: true, identifiant, courriel, titre: await titreValide(b.titre), prenom, nom, motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
   });
   await fermerPremiere();
+  await journaliser("premiere_connexion", { utilisateurId: u.id, identifiant });
   return NextResponse.json({ ...(await suiteApresMotDePasse(maj)), identifiant });
 }

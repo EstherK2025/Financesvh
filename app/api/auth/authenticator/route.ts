@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { bloque, ipClient, messageBloque } from "@/lib/fin-securite";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { compteEnAttente2FA, echecCode, fermerAttente2FA, ouvrirSession } from "@/lib/fin-auth";
 import { lienOtpauth, nouveauSecret, secretLisible, verifierTotp } from "@/lib/totp";
+import { journaliser } from "@/lib/fin-securite";
 
 // Premier passage avec la double authentification activée : configuration de
 // l'application Authenticator.
@@ -20,6 +22,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const attente = await bloque([`code:ip:${await ipClient()}`]);
+  if (attente) return NextResponse.json({ error: messageBloque(attente) }, { status: 429 });
   const u = await compteEnAttente2FA();
   if (!u || u.totpActif || !u.totpSecret) return NextResponse.json({ error: "Session expirée. Reconnectez-vous." }, { status: 401 });
   const b = await req.json().catch(() => ({}));
@@ -27,6 +31,7 @@ export async function POST(req: Request) {
   if (pas === null) return NextResponse.json({ error: await echecCode(u) }, { status: 401 });
   await prisma.finUtilisateur.update({ where: { id: u.id }, data: { totpActif: true, totpDernier: pas, echecs: 0 } });
   await fermerAttente2FA();
+  await journaliser("authenticator_configure", { utilisateurId: u.id });
   await ouvrirSession(u.id);
   return NextResponse.json({ ok: true });
 }

@@ -43,7 +43,7 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
     moi.role === "superadmin" && d.statut === "attente_leader"
       ? (
           await prisma.finUtilisateur.findMany({
-            where: { actif: true, role: { in: ["admin", "superadmin", "delegue"] }, id: { notIn: [d.demandeurId, d.approbateurId || ""] } },
+            where: { actif: true, role: { in: ["admin", "superadmin", "delegue"] }, id: { notIn: [d.demandeurId, d.approbateurId || "", moi.id] } },
             orderBy: [{ role: "asc" }, { ministere: "asc" }],
           })
         ).map((u) => ({ id: u.id, nom: `${nomUtilisateur(u)} — ${libelleCompte(u)}` }))
