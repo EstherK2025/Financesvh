@@ -27,6 +27,9 @@ datasource db {
 model FinUtilisateur {
   id           String   @id @default(cuid())
   titre        String? // GA, AP, PA, AE, AM, Responsable (affiché devant le nom)
+  // true quand la personne responsable a elle-même saisi son nom (première
+  // connexion). « Réinitialiser le compte » le remet à false (nouveau responsable).
+  nomConfirme  Boolean  @default(false)
   prenom       String
   nom          String
   identifiant  String?  @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules

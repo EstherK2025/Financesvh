@@ -41,6 +41,9 @@ export async function POST(req: Request) {
       etape: "premiere",
       compte: libelleCompte(u),
       titre: u.titre || "",
+      // Nom déjà saisi par la personne (mot de passe réinitialisé) : seulement un nouveau mot de passe.
+      nomConfirme: u.nomConfirme,
+      identifiant: u.identifiant,
       titres: await titres(),
       prenom: u.prenom,
       nom: u.nom,

@@ -3,8 +3,8 @@ import { titreValide } from "@/lib/fin-reglages";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, fermerSessionsDe, utilisateurCourant } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { ROLES_COMPTES as ROLES, nomUtilisateur, normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
-import { organisationDe } from "@/lib/fin-comptes";
+import { ROLES_COMPTES as ROLES, courrielParDefaut, nomUtilisateur, normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
+import { identifiantDeBase, organisationDe } from "@/lib/fin-comptes";
 
 // Modifier un compte (super admin) :
 // { titre?, prenom?, nom?, identifiant?, courriel?, role?, ministere?, departement?, leaderId?, actif?, reinitialiserAuthenticator? }
@@ -54,11 +54,34 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!o.ok) return NextResponse.json({ error: o.erreur }, { status: 400 });
     Object.assign(data, { role }, o.org);
   }
-  // Réinitialiser l'accès : le compte repart en « première connexion » (mot de
-  // passe temporaire universel → nom → nouveau mot de passe → identifiant prenom.nom).
-  if (b.reinitialiserAcces === true) {
+  // Réinitialiser :
+  //  • « mot_de_passe » : même responsable — mot de passe et Authenticator
+  //    effacés ; à la prochaine connexion (identifiant actuel + mot de passe
+  //    temporaire), il choisit seulement un nouveau mot de passe.
+  //  • « compte » : nouveau responsable — titre, nom, mot de passe et
+  //    Authenticator effacés, identifiant d'origine rétabli (ex. min-cultes) ;
+  //    la personne refait une vraie première connexion (nom → prenom.nom).
+  let identifiantRetabli: string | null = null;
+  if (b.reinitialiser === "mot_de_passe" || b.reinitialiser === "compte") {
     if (u.role === "delegue") return NextResponse.json({ error: "Le compte partagé se gère dans les Réglages." }, { status: 400 });
     Object.assign(data, { motDePasse: null, jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null, totpSecret: null, totpActif: false, totpDernier: null });
+    // Comptes créés avant ce réglage : un nom déjà renseigné vaut nom confirmé.
+    if (b.reinitialiser === "mot_de_passe" && u.prenom && u.nom) data.nomConfirme = true;
+    if (b.reinitialiser === "compte") {
+      if (id === moi.id) return NextResponse.json({ error: "Vous ne pouvez pas réinitialiser votre propre compte (utilisez « Réinitialiser le mot de passe »)." }, { status: 400 });
+      identifiantRetabli = await identifiantDeBase(u);
+      const courrielBase = courrielParDefaut(identifiantRetabli);
+      const pris = await prisma.finUtilisateur.findUnique({ where: { courriel: courrielBase } });
+      Object.assign(data, {
+        titre: null,
+        prenom: "",
+        nom: "",
+        nomConfirme: false,
+        identifiant: identifiantRetabli,
+        // Courriel par défaut de l'ancien responsable → celui du compte.
+        ...(u.courriel === courrielParDefaut(u.identifiant || "") || !u.courriel ? { courriel: pris && pris.id !== id ? null : courrielBase } : {}),
+      });
+    }
   }
   // Téléphone perdu/changé : la personne reconfigurera l'Authenticator à sa prochaine connexion.
   if (b.reinitialiserAuthenticator === true) Object.assign(data, { totpSecret: null, totpActif: false, totpDernier: null });
@@ -74,8 +97,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // Ministère renommé : ses départements suivent.
     await prisma.finUtilisateur.updateMany({ where: { leaderId: id }, data: { ministere: data.ministere as string } });
   }
-  if (data.actif === false || b.reinitialiserAcces === true) await fermerSessionsDe(id);
-  return NextResponse.json({ ok: true });
+  if (data.actif === false || b.reinitialiser) await fermerSessionsDe(id);
+  return NextResponse.json({ ok: true, identifiant: identifiantRetabli || undefined });
 }
 
 // Renvoyer le lien d'activation / de réinitialisation.

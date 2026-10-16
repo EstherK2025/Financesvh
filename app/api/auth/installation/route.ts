@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const pb = problemeIdentifiant(identifiant);
   if (pb) return NextResponse.json({ error: pb }, { status: 400 });
 
-  const u = await prisma.finUtilisateur.create({ data: { titre: await titreValide(b.titre), prenom, nom, identifiant, courriel, role: "superadmin" } });
+  const u = await prisma.finUtilisateur.create({ data: { titre: await titreValide(b.titre), prenom, nom, identifiant, courriel, role: "superadmin", nomConfirme: true } });
   const jeton = await creerJetonCompte(u.id);
   await courrielInvitation(u.courriel, nomUtilisateur(u), jeton);
   // Le lien est aussi renvoyé directement (l'installateur connaît le mot de passe d'installation).
