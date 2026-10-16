@@ -34,8 +34,9 @@ export function signatureValide(s: unknown): string | null {
 
 // Courriel des comptes : identifiant@evhnb.ca
 export const DOMAINE_COURRIEL = "evhnb.ca";
+// Courriel sans accents (les adresses accentuées sont mal prises en charge).
 export function courrielParDefaut(identifiant: string): string {
-  return `${identifiant}@${DOMAINE_COURRIEL}`;
+  return `${sansAccents(identifiant)}@${DOMAINE_COURRIEL}`;
 }
 
 export function libelleOrg(m: string | null | undefined, d: string | null | undefined): string {
@@ -146,13 +147,20 @@ export function nomUtilisateur(u: NomCompte): string {
 
 // ── Identifiant (nom d'utilisateur) ──
 // 3 à 30 caractères : lettres minuscules, chiffres, point, tiret, souligné.
+// Les accents sont acceptés (marie-ève.côté) ; forme Unicode unifiée (NFC)
+// pour qu'un « é » tapé sur iPhone ou sur ordinateur soit le même.
 export function normaliserIdentifiant(s: unknown): string {
-  return String(s ?? "").trim().toLowerCase();
+  return String(s ?? "").trim().normalize("NFC").toLowerCase();
 }
 export function problemeIdentifiant(id: string): string | null {
-  if (!/^[a-z0-9._-]{3,30}$/.test(id))
-    return "Identifiant : 3 à 30 caractères (lettres minuscules sans accent, chiffres, point, tiret).";
+  if (!/^[\p{Ll}\p{Lo}0-9._-]{3,30}$/u.test(id))
+    return "Identifiant : 3 à 30 caractères (lettres minuscules, accents acceptés, chiffres, point, tiret).";
   return null;
+}
+// Forme sans accents : connexion possible sans taper les accents, et deux
+// identifiants ne peuvent pas différer seulement par les accents.
+export function sansAccents(s: string): string {
+  return s.normalize("NFD").replace(/\p{M}/gu, "").normalize("NFC");
 }
 
 // ── Mot de passe sécurisé ──
@@ -179,14 +187,14 @@ export function libelleCompte(u: { role: string; ministere?: string | null; depa
   return u.identifiant || "Compte";
 }
 
-// Identifiant créé à la première connexion : « prenom.nom » (minuscules, sans
-// accents ; espaces et autres caractères → tiret). Ex. « Marie-Ève Côté » → « marie-eve.cote ».
+// Identifiant créé à la première connexion : « prénom.nom de famille »
+// (minuscules, accents conservés ; espaces et autres signes → tiret).
+// Ex. « Marie-Ève Côté » → « marie-ève.côté » ; « John de la Tour » → « john.de-la-tour ».
 function morceauIdentifiant(s: string): string {
   return s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .normalize("NFC")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
 }
 export function identifiantDepuisNom(prenom: string, nom: string): string {

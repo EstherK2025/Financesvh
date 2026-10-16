@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { comptePremiere, egalConstant, fermerPremiere, hacherMotDePasse } from "@/lib/fin-auth";
 import { suiteApresMotDePasse } from "@/lib/fin-connexion";
 import { mdpTemporaire, titreValide } from "@/lib/fin-reglages";
-import { DOMAINE_COURRIEL, courrielParDefaut, identifiantDepuisNom, problemeIdentifiant, problemeMotDePasse } from "@/lib/finances";
+import { DOMAINE_COURRIEL, courrielParDefaut, identifiantDepuisNom, problemeIdentifiant, problemeMotDePasse, sansAccents } from "@/lib/finances";
 
 // Première connexion : la personne indique son prénom et son nom (responsable
 // du ministère / département) et crée SON mot de passe. Son identifiant devient
@@ -25,15 +25,14 @@ export async function POST(req: Request) {
   // Identifiant « prenom.nom », rendu unique (john.doe, john.doe2…).
   const base = identifiantDepuisNom(prenom, nom);
   if (problemeIdentifiant(base)) return NextResponse.json({ error: "Prénom et nom trop courts pour créer l'identifiant." }, { status: 400 });
+  // Pris = même identifiant, accents mis à part (côté = cote).
+  const autres = await prisma.finUtilisateur.findMany({ where: { id: { not: u.id }, identifiant: { not: null } }, select: { identifiant: true } });
+  const pris = new Set(autres.map((a) => sansAccents(a.identifiant!)));
   let identifiant = base;
-  for (let i = 2; ; i++) {
-    const autre = await prisma.finUtilisateur.findUnique({ where: { identifiant } });
-    if (!autre || autre.id === u.id) break;
-    identifiant = `${base.slice(0, 28)}${i}`;
-  }
+  for (let i = 2; pris.has(sansAccents(identifiant)); i++) identifiant = `${base.slice(0, 28)}${i}`;
   // Courriel par défaut (ancien-identifiant@evhnb.ca) → suit le nouvel identifiant s'il est libre.
   let courriel = u.courriel;
-  if (!courriel || courriel === `${u.identifiant}@${DOMAINE_COURRIEL}`) {
+  if (!courriel || courriel === courrielParDefaut(u.identifiant || "") || courriel === `${u.identifiant}@${DOMAINE_COURRIEL}`) {
     const nouveau = courrielParDefaut(identifiant);
     const pris = await prisma.finUtilisateur.findUnique({ where: { courriel: nouveau } });
     if (!pris || pris.id === u.id) courriel = nouveau;

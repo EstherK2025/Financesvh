@@ -112,9 +112,11 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
   l'application **Authenticator** si la double authentification est activée). Le mot de passe temporaire ne fonctionne plus ensuite pour ce
   compte (ni pour un compte déjà activé).
 - À la première connexion, l'**identifiant devient automatiquement
-  `prenom.nom`** (minuscules, sans accents : « Marie-Ève Côté » →
-  `marie-eve.cote` ; `john.doe2` si déjà pris) ; il s'affiche à l'écran et le
-  courriel par défaut suit (`prenom.nom@evhnb.ca`).
+  `prénom.nom de famille`**, **accents acceptés** (« Marie-Ève Côté » →
+  `marie-ève.côté` ; « John de la Tour » → `john.de-la-tour` ; `john.doe2` si
+  déjà pris). Il s'affiche à l'écran. La connexion fonctionne aussi en tapant
+  l'identifiant **sans accents**. Le courriel par défaut suit, sans accents
+  (`marie-eve.cote@evhnb.ca`).
 - **Réinitialiser l'accès** (Utilisateurs) : efface le mot de passe et
   l'Authenticator ; le compte repart en première connexion.
 - **Supprimer toutes les demandes** (Réglages → zone sensible, confirmation
