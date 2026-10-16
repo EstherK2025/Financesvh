@@ -52,7 +52,7 @@ export default async function UtilisateursPage() {
         </li>
       </ul>
       <div className="fin-note">
-        <b className="fin-titre-note">🔑 Mot de passe temporaire universel</b>
+        <b className="fin-titre-note">Mot de passe temporaire universel</b>
         <code style={{ fontSize: 16, fontWeight: 800, userSelect: "all" }}>{await mdpTemporaire()}</code>
         <br />
         Pour la première connexion : chaque personne se connecte avec son identifiant et ce mot de passe, puis crée son propre mot de

@@ -130,7 +130,7 @@ export default function ConnexionForm() {
     return (
       <form className="fin-carte" onSubmit={creerMotDePasse}>
         <div className="fin-note">
-          🔑 <b className="fin-titre-note">Mot de passe réinitialisé</b>
+          <b className="fin-titre-note">Mot de passe réinitialisé</b>
           Choisissez un nouveau mot de passe pour votre compte <b>{identifiantActuel}</b>. Votre identifiant ne change pas.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
@@ -145,7 +145,7 @@ export default function ConnexionForm() {
     return (
       <form className="fin-carte" onSubmit={creerMotDePasse}>
         <div className="fin-note">
-          👋 Bienvenue ! C&apos;est la <b>première connexion</b> du compte <b>{compte}</b>. Indiquez votre nom (responsable de ce
+          Bienvenue ! C&apos;est la <b>première connexion</b> du compte <b>{compte}</b>. Indiquez votre nom (responsable de ce
           compte) et créez votre propre mot de passe. Votre identifiant deviendra automatiquement <b>prénom.nom</b>. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
@@ -176,7 +176,7 @@ export default function ConnexionForm() {
   if (etape === "identifiant")
     return (
       <div className="fin-carte" style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 15, marginBottom: 10 }}>✅ Votre compte est prêt. Votre identifiant de connexion est désormais :</div>
+        <div style={{ fontSize: 15, marginBottom: 10 }}>Votre compte est prêt. Votre identifiant de connexion est désormais :</div>
         <div className="fin-mdp-temp">{nouvelIdentifiant}</div>
         <p style={{ fontSize: 13.5, color: "var(--fin-gris)", marginBottom: 16 }}>
           Notez-le : vous l&apos;utiliserez avec votre nouveau mot de passe pour vous connecter.
@@ -198,7 +198,7 @@ export default function ConnexionForm() {
       <form className="fin-carte" onSubmit={envoyerCode}>
         {noteIdentifiant}
         <div className="fin-note">
-          🔐 <b>Double authentification</b> — à faire une seule fois : configurez l&apos;application <b>Authenticator</b> sur votre
+          <b>Double authentification</b> — à faire une seule fois : configurez l&apos;application <b>Authenticator</b> sur votre
           téléphone (Google Authenticator ou Microsoft Authenticator, gratuites).
         </div>
         <ol className="fin-instructions">
@@ -235,7 +235,7 @@ export default function ConnexionForm() {
     return (
       <form className="fin-carte" onSubmit={envoyerCode}>
         <div className="fin-note">
-          🔐 <b>Double authentification</b> — ouvrez votre application <b>Authenticator</b> et entrez le code affiché pour « Finances VH ».
+          <b>Double authentification</b> — ouvrez votre application <b>Authenticator</b> et entrez le code affiché pour « Finances VH ».
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
         {champCode}

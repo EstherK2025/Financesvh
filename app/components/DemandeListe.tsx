@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TYPES, formatMontant, nomUtilisateur, reference, type NomCompte, type TypeDemande } from "@/lib/finances";
 import StatutTag from "./StatutTag";
+import Icone from "./Icone";
 
 export type LigneDemande = {
   id: string;
@@ -63,7 +64,7 @@ export default function DemandeListe({ demandes, avecDemandeur = false, vide, pd
               {pdf && (
                 <td>
                   <a href={`/api/demandes/${d.id}/pdf?telecharger=1`} title="Télécharger la fiche PDF (à classer)" aria-label="Télécharger la fiche PDF">
-                    ⬇️
+                    <Icone nom="telecharger" taille={18} />
                   </a>
                 </td>
               )}

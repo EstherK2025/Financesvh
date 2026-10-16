@@ -70,7 +70,7 @@ async function envoyerSur(to: string, sujet: string, html: string) {
 export async function courrielInvitation(to: string | null, prenom: string, jeton: string, reinitialisation = false) {
   const url = lienFinances(`/activer/${jeton}`);
   if (!to) return; // pas encore de courriel : le lien est transmis à la main
-  if (!process.env.RESEND_API_KEY) console.log(`🔗 [SIMULATION] Lien ${reinitialisation ? "de réinitialisation" : "d'activation"} pour ${to} : ${url}`);
+  if (!process.env.RESEND_API_KEY) console.log(`[SIMULATION] Lien ${reinitialisation ? "de réinitialisation" : "d'activation"} pour ${to} : ${url}`);
   await envoyerSur(
     to,
     reinitialisation ? "Réinitialiser votre mot de passe — Finances" : "Votre compte sur la plateforme des finances",

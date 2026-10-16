@@ -7,6 +7,7 @@ import { contexteFormulaire } from "../../components/circuit";
 import StatutTag from "../../components/StatutTag";
 import DemandeForm from "../../components/DemandeForm";
 import Decision from "./Decision";
+import Icone from "../../components/Icone";
 
 export const dynamic = "force-dynamic";
 
@@ -58,10 +59,10 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
       {moi.role === "superadmin" && (
         <div className="fin-actions" style={{ margin: "8px 0 4px" }}>
           <a href={`/api/demandes/${d.id}/pdf`} target="_blank" rel="noopener" className="fin-btn blanc petit">
-            🖨️ Imprimer (PDF)
+            <Icone nom="imprimer" taille={17} /> Imprimer (PDF)
           </a>
           <a href={`/api/demandes/${d.id}/pdf?telecharger=1`} className="fin-btn blanc petit">
-            ⬇️ Télécharger pour classer
+            <Icone nom="telecharger" taille={17} /> Télécharger pour classer
           </a>
         </div>
       )}
@@ -137,7 +138,7 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
                   {d.pieces.map((p) => (
                     <li key={p.id}>
                       <a href={`/api/pieces/${p.id}`} target="_blank" rel="noopener">
-                        📎 {p.nom}
+                        <Icone nom="trombone" taille={16} /> {p.nom}
                       </a>
                     </li>
                   ))}

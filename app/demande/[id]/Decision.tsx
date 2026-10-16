@@ -86,10 +86,10 @@ export default function Decision({ demandeId, statut, peut, externe = false, att
           </div>
           <div className="fin-actions">
             <button className="fin-btn ok" disabled={charge} onClick={() => agir("approuver")}>
-              ✓ Signer et approuver
+              Signer et approuver
             </button>
             <button className="fin-btn non" disabled={charge} onClick={() => agir("refuser")}>
-              ✕ Refuser (renvoyer au demandeur)
+              Refuser (renvoyer au demandeur)
             </button>
           </div>
         </>

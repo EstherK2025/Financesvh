@@ -317,7 +317,7 @@ export default function Utilisateurs({
             : u.active
               ? `Actif${u.derniereConnexion ? ` · vu le ${u.derniereConnexion}` : ""}`
               : "Première connexion à faire"}
-          {u.authenticator && <div title="Application Authenticator configurée">🔐 Authenticator</div>}
+          {u.authenticator && <div title="Application Authenticator configurée">Authenticator activé</div>}
         </td>
         <td>
           <div className="fin-actions" style={{ justifyContent: "flex-end" }}>

@@ -106,7 +106,7 @@ export default async function TableauDeBord() {
 
       {aReviser.length > 0 && (
         <>
-          <h2>⚠️ À réviser ou annuler</h2>
+          <h2>À réviser ou annuler</h2>
           <DemandeListe demandes={aReviser} vide="" />
         </>
       )}
