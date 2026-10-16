@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, motDePasseInstallationValide } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
 import { courrielParDefaut, normaliserIdentifiant, problemeIdentifiant, nomUtilisateur } from "@/lib/finances";
+import { REGLES, bloque, compter, ipClient, messageBloque } from "@/lib/fin-securite";
 
 // Création du tout premier super admin (possible uniquement quand aucun compte
 // n'existe encore). Protégée par le mot de passe d'installation.
@@ -11,8 +12,13 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   if ((await prisma.finUtilisateur.count()) > 0)
     return NextResponse.json({ error: "La plateforme est déjà installée." }, { status: 403 });
-  if (!motDePasseInstallationValide(String(b.motDePasseInstallation || "")))
+  const cle = `lien:ip:${await ipClient()}`;
+  const attente = await bloque([cle]);
+  if (attente) return NextResponse.json({ error: messageBloque(attente) }, { status: 429 });
+  if (!motDePasseInstallationValide(String(b.motDePasseInstallation || ""))) {
+    await compter([[cle, REGLES.lienIp]]);
     return NextResponse.json({ error: "Mot de passe d'installation incorrect." }, { status: 401 });
+  }
 
   const prenom = String(b.prenom || "").trim().slice(0, 80);
   const nom = String(b.nom || "").trim().slice(0, 80);

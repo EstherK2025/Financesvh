@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { egalConstant, ouvrirPremiere, trouverCompte, verifierMotDePasse, MAX_ECHECS, DUREE_VERROU_MS } from "@/lib/fin-auth";
+import { egalConstant, ouvrirPremiere, trouverCompte, verifierMotDePasse, hacherMotDePasse } from "@/lib/fin-auth";
+import { REGLES, bloque, compter, effacer, ipClient, journaliser, messageBloque } from "@/lib/fin-securite";
+import { sansAccents } from "@/lib/finances";
 import { suiteApresMotDePasse } from "@/lib/fin-connexion";
 import { mdpTemporaire, titres } from "@/lib/fin-reglages";
 import { libelleCompte } from "@/lib/finances";
@@ -16,23 +17,32 @@ export async function POST(req: Request) {
   const refus = NextResponse.json({ error: "Identifiant ou mot de passe incorrect." }, { status: 401 });
   if (!motDePasse) return refus;
 
-  const u = await trouverCompte(b.identifiant ?? b.courriel);
-  if (!u || !u.actif) return refus;
-  if (u.verrouJusqua && u.verrouJusqua > new Date()) {
-    const min = Math.ceil((u.verrouJusqua.getTime() - Date.now()) / 60000);
-    return NextResponse.json({ error: `Compte verrouillé après plusieurs essais. Réessayez dans ${min} min.` }, { status: 429 });
-  }
+  // Limitation des tentatives (en base) : par IP et par identifiant saisi,
+  // que le compte existe ou non (même réponse dans les deux cas).
+  const saisie = sansAccents(String(b.identifiant ?? b.courriel ?? "").trim()).toLowerCase().slice(0, 160);
+  const ip = await ipClient();
+  const cles = [`connexion:ip:${ip}`, `connexion:id:${saisie}`];
+  const attente = await bloque(cles);
+  if (attente) return NextResponse.json({ error: messageBloque(attente) }, { status: 429 });
 
-  const premiere = !u.motDePasse;
-  const valide = premiere ? egalConstant(motDePasse, await mdpTemporaire()) : verifierMotDePasse(motDePasse, u.motDePasse);
-  if (!valide) {
-    const echecs = u.echecs + 1;
-    await prisma.finUtilisateur.update({
-      where: { id: u.id },
-      data: echecs >= MAX_ECHECS ? { echecs: 0, verrouJusqua: new Date(Date.now() + DUREE_VERROU_MS) } : { echecs },
-    });
+  const u = await trouverCompte(saisie);
+  // Compte verrouillé (trop de codes Authenticator erronés) : même message.
+  if (u?.verrouJusqua && u.verrouJusqua > new Date())
+    return NextResponse.json({ error: messageBloque(Math.ceil((u.verrouJusqua.getTime() - Date.now()) / 60000)) }, { status: 429 });
+
+  const premiere = !!u && !u.motDePasse;
+  // Compte inexistant : on calcule quand même un hachage (temps de réponse identique).
+  const valide = !u || !u.actif ? (hacherMotDePasse(motDePasse), false) : premiere ? egalConstant(motDePasse, await mdpTemporaire()) : verifierMotDePasse(motDePasse, u.motDePasse);
+  if (!valide || !u) {
+    const limite = await compter([
+      [cles[0], REGLES.connexionIp],
+      [cles[1], REGLES.connexionId],
+    ]);
+    await journaliser(limite ? "connexion_bloquee" : "connexion_echec", { utilisateurId: u?.id, identifiant: saisie });
+    if (limite) return NextResponse.json({ error: messageBloque(15) }, { status: 429 });
     return refus;
   }
+  await effacer([cles[1]]);
 
   if (premiere) {
     await ouvrirPremiere(u.id);

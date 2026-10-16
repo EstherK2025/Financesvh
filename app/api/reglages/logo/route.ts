@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { utilisateurCourant } from "@/lib/fin-auth";
+import { journaliser } from "@/lib/fin-securite";
 
 const TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 

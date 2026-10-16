@@ -45,6 +45,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       if (!peut.approuver) return interdit();
       signature = signatureValide(b.signature);
       if (!signature) return NextResponse.json({ error: "Signez dans le cadre prévu avant d'approuver." }, { status: 400 });
+      // Séparation des tâches : la personne qui a donné la 1re approbation ne
+      // peut pas donner aussi l'approbation des finances.
+      if (d.statut === "attente_finances") {
+        const premiere = await prisma.finHistorique.findFirst({ where: { demandeId: id, action: "approuvee_leader" }, orderBy: { createdAt: "desc" } });
+        if (premiere?.auteurId === moi.id)
+          return NextResponse.json({ error: "Vous avez déjà donné la 1re approbation : l'approbation des finances doit venir d'une autre personne." }, { status: 403 });
+      }
       nouveau = d.statut === "attente_leader" ? "attente_finances" : "approuvee";
       histo = d.statut === "attente_leader" ? "approuvee_leader" : "approuvee_finances";
       break;
@@ -72,7 +79,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // (ex. l'approbateur externe), tant que la demande attend cette étape.
       if (moi.role !== "superadmin" || d.statut !== "attente_leader") return interdit();
       const cible = await prisma.finUtilisateur.findUnique({ where: { id: String(b.approbateurId || "") } });
-      if (!cible || !cible.actif || cible.id === d.demandeurId || !["admin", "superadmin", "delegue"].includes(cible.role))
+      if (!cible || !cible.actif || cible.id === d.demandeurId || cible.id === moi.id || !["admin", "superadmin", "delegue"].includes(cible.role))
         return NextResponse.json({ error: "Approbateur invalide." }, { status: 400 });
       nouveau = d.statut;
       histo = "attribuee";

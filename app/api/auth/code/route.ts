@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { bloque, ipClient, messageBloque } from "@/lib/fin-securite";
 import { prisma } from "@/lib/prisma";
 import { compteEnAttente2FA, echecCode, fermerAttente2FA, ouvrirSession } from "@/lib/fin-auth";
 import { verifierTotp } from "@/lib/totp";
 
 // Étape 2 : code à 6 chiffres affiché par l'application Authenticator.
 export async function POST(req: Request) {
+  const attente = await bloque([`code:ip:${await ipClient()}`]);
+  if (attente) return NextResponse.json({ error: messageBloque(attente) }, { status: 429 });
   const u = await compteEnAttente2FA();
   if (!u || !u.totpActif || !u.totpSecret)
     return NextResponse.json({ error: "Session expirée. Reconnectez-vous." }, { status: 401 });

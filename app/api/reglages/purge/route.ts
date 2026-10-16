@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { utilisateurCourant } from "@/lib/fin-auth";
+import { journaliser } from "@/lib/fin-securite";
 
 // Supprimer TOUTES les demandes (annulées ou non), avec leurs pièces jointes et
 // leur historique. Super administrateur, confirmation « SUPPRIMER » obligatoire.
@@ -10,5 +11,6 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   if (b.confirmation !== "SUPPRIMER") return NextResponse.json({ error: "Tapez SUPPRIMER pour confirmer." }, { status: 400 });
   const r = await prisma.finDemande.deleteMany({});
+  await journaliser("purge", { utilisateurId: moi.id, detail: `${r.count} demande(s)` });
   return NextResponse.json({ ok: true, supprimees: r.count });
 }

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { prisma } from "./prisma";
 import { sansAccents, type Role } from "./finances";
+import { REGLES, compter, ipClient, journaliser } from "./fin-securite";
 
 // ───────────────────────────────────────────────────────────
 // Authentification de la plateforme Finances :
@@ -27,7 +28,10 @@ const cookieBase = {
 };
 
 function secret() {
-  return process.env.FIN_SECRET || process.env.DATABASE_URL || "dev-finances-vh";
+  const s = process.env.FIN_SECRET || process.env.DATABASE_URL;
+  if (s) return s;
+  if (process.env.NODE_ENV === "production") throw new Error("FIN_SECRET manquant");
+  return "dev-finances-vh";
 }
 
 export function sha256(s: string): string {
@@ -84,7 +88,9 @@ export async function fermerAttente2FA() {
 }
 
 // Code erroné : compte dans les échecs (verrouillage 15 min après 5).
-export async function echecCode(u: { id: string; echecs: number }): Promise<string> {
+export async function echecCode(u: { id: string; echecs: number; identifiant?: string | null }): Promise<string> {
+  await journaliser("code_echec", { utilisateurId: u.id, identifiant: u.identifiant });
+  await compter([[`code:ip:${await ipClient()}`, REGLES.codeIp]]);
   const echecs = u.echecs + 1;
   if (echecs >= MAX_ECHECS) {
     await prisma.finUtilisateur.update({ where: { id: u.id }, data: { echecs: 0, verrouJusqua: new Date(Date.now() + DUREE_VERROU_MS) } });
@@ -135,6 +141,7 @@ export async function ouvrirSession(utilisateurId: string) {
     where: { id: utilisateurId },
     data: { derniereConnexion: new Date(), echecs: 0, verrouJusqua: null },
   });
+  await journaliser("connexion", { utilisateurId });
   // Ménage des sessions expirées.
   await prisma.finSession.deleteMany({ where: { expire: { lt: new Date() } } });
   const jar = await cookies();

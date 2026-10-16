@@ -5,6 +5,7 @@ import { creerJetonCompte, fermerSessionsDe, utilisateurCourant } from "@/lib/fi
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
 import { ROLES_COMPTES as ROLES, courrielParDefaut, nomUtilisateur, normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
 import { identifiantDeBase, organisationDe } from "@/lib/fin-comptes";
+import { journaliser } from "@/lib/fin-securite";
 
 // Modifier un compte (super admin) :
 // { titre?, prenom?, nom?, identifiant?, courriel?, role?, ministere?, departement?, leaderId?, actif?, reinitialiserAuthenticator? }
@@ -91,6 +92,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data.actif = Boolean(b.actif);
   }
   await prisma.finUtilisateur.update({ where: { id }, data });
+  await journaliser(b.reinitialiser || b.reinitialiserAuthenticator ? "compte_reinitialise" : "compte_modifie", {
+    utilisateurId: moi.id,
+    identifiant: u.identifiant,
+    detail: b.reinitialiser ? `Réinitialisation : ${b.reinitialiser}` : b.reinitialiserAuthenticator ? "Authenticator" : `Champs : ${Object.keys(data).filter((k) => k !== "motDePasse").join(", ")}`,
+  });
   if (u.role === "admin" && data.role !== undefined && data.role !== "admin") {
     // N'est plus administrateur de ministère : ses départements sont détachés.
     await prisma.finUtilisateur.updateMany({ where: { leaderId: id }, data: { leaderId: null, ministere: null } });
@@ -135,5 +141,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     if (u.role === "admin") await tx.finUtilisateur.updateMany({ where: { leaderId: id }, data: { leaderId: null, ministere: null } });
     await tx.finUtilisateur.delete({ where: { id } });
   });
+  await journaliser("compte_supprime", { utilisateurId: moi.id, identifiant: u.identifiant });
   return NextResponse.json({ ok: true });
 }

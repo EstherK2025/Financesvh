@@ -60,18 +60,21 @@ export default function Reglages({ mdp, aUnLogo, version, deuxFacteurs }: Props)
         <p style={{ fontSize: 14, marginBottom: 12 }}>
           {deuxFacteurs ? (
             <>
-              <b>Activée</b> : après le mot de passe, chaque personne entre le code à 6 chiffres de son application{" "}
+              <b>Activée pour tous</b> : après le mot de passe, chaque personne entre le code à 6 chiffres de son application{" "}
               <b>Authenticator</b> (Google ou Microsoft Authenticator). Au premier passage, elle scanne un QR code.
             </>
           ) : (
             <>
-              <b>Désactivée</b> : l&apos;identifiant et le mot de passe suffisent. Une fois activée, chaque personne configure
+              <b>Départements : désactivée</b> — l&apos;identifiant et le mot de passe suffisent. Une fois activée, chaque personne configure
               l&apos;application <b>Authenticator</b> (Google ou Microsoft Authenticator) sur son téléphone à sa prochaine connexion.
             </>
           )}
         </p>
+        <p style={{ fontSize: 13.5, marginBottom: 12, color: "var(--fin-gris)" }}>
+          Toujours exigée pour les <b>ministères</b> (administrateurs) et le <b>super administrateur</b>, qui approuvent et paient.
+        </p>
         <button className={`fin-btn ${deuxFacteurs ? "non" : ""}`} onClick={basculerDoubleAuth}>
-          {deuxFacteurs ? "Désactiver la double authentification" : "Activer la double authentification"}
+          {deuxFacteurs ? "Désactiver pour les départements" : "Activer aussi pour les départements"}
         </button>
       </div>
 

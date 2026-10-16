@@ -5,6 +5,7 @@ import Reglages from "./Reglages";
 import ReglagesTitres from "./ReglagesTitres";
 import ReglagesDelegue from "./ReglagesDelegue";
 import ReglagesPurge from "./ReglagesPurge";
+import JournalSecurite from "./JournalSecurite";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function ReglagesPage() {
         compte={delegue ? { identifiant: delegue.identifiant || "", actif: delegue.actif, aTraiter: delegue._count.aApprouver } : null}
       />
       <ReglagesTitres titres={listeTitres} />
+      <JournalSecurite />
       <ReglagesPurge nbDemandes={nbDemandes} />
     </div>
   );
