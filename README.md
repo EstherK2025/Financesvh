@@ -63,11 +63,11 @@ dans `lib/organigramme.ts`, avec l'identifiant de chaque compte :
 
 Dans **Utilisateurs**, le bouton **« Créer les comptes de l'organigramme »**
 crée d'un coup les 56 comptes (relancer ne crée que ceux qui manquent).
-Les comptes n'ont pas encore de courriel : pour chacun, cliquer **« Lien
-d'activation »** (le lien est copié) et l'envoyer par WhatsApp ou SMS. La
-personne choisit son mot de passe et **saisit son courriel**, qui recevra
-ensuite ses codes de connexion. Identifiants des départements : voir
-`lib/organigramme.ts` (ex. `tribus`, `louange`, `finances`).
+Chaque compte reçoit le courriel `identifiant@evhnb.ca`. Donner à chaque
+personne son **identifiant** et le **mot de passe temporaire universel** : à sa
+première connexion, elle crée son mot de passe puis valide le code reçu par
+courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
+`finances`, `min-integration`).
 
 > Avec un seul super administrateur, ses propres demandes ne peuvent pas être
 > approuvées aux finances (personne n'approuve sa propre demande) : ajouter un
@@ -75,10 +75,19 @@ ensuite ses codes de connexion. Identifiants des départements : voir
 
 ## Sécurité
 
-- Connexion par **identifiant** (ex. `estherk`) ou courriel.
-- Comptes **nominatifs** : le super admin crée le compte, la personne reçoit un
-  lien et choisit son mot de passe (**10 caractères min., majuscule, minuscule,
-  chiffre**).
+- Connexion par **identifiant** (ex. `estherk`, `tribus`) ou courriel.
+- **Première connexion** : identifiant + **mot de passe temporaire universel**
+  → la personne **crée son propre mot de passe** (10 caractères min.,
+  majuscule, minuscule, chiffre) → elle reçoit un **code par courriel** → elle
+  est connectée. Le mot de passe temporaire ne fonctionne plus ensuite pour ce
+  compte (ni pour un compte déjà activé).
+- Le mot de passe temporaire universel est **affiché au super administrateur**
+  (Utilisateurs et Réglages) et modifiable dans **Réglages**. Il est généré au
+  hasard à l'installation (format `VH-XXXXXX`).
+- Courriel de chaque compte : **`identifiant@evhnb.ca`** (ex. `tribus@evhnb.ca`),
+  sauf si un autre est saisi. Ces boîtes doivent exister : elles reçoivent les
+  codes de connexion.
+- Autre possibilité : bouton « Lien d'activation » (lien personnel à envoyer).
 - **Double authentification** : mot de passe, puis **code à 6 chiffres reçu par
   courriel** (10 min, 5 essais). Verrouillage 15 min après 5 mots de passe
   erronés. « Mot de passe oublié » par lien courriel.
@@ -87,10 +96,12 @@ ensuite ses codes de connexion. Identifiants des départements : voir
 
 ## Couleurs et logo Vases d'Honneur
 
-- **Couleurs** (tirées du logo) : vert `#006c67`, or `#ceae1d`, orange `#ec8002`
+- **Couleurs** (tirées du logo de l'Assemblée Havre de Paix — à ajuster si
+  celles de Vases d'Honneur diffèrent) : vert `#006c67`, or `#ceae1d`, orange `#ec8002`
   — variables `--fin-primaire`, `--fin-accent`, `--fin-orange` en haut du bloc
   « DÉPARTEMENT DES FINANCES » de `app/globals.css`.
-- **Logo** : `public/vh-logo.png` (symbole repris de Rapports VH).
+- **Logo** : le super administrateur téléverse le logo Vases d'Honneur dans
+  **Réglages** (PNG, JPG, WebP ou SVG). Sans logo, le sigle « VH » s'affiche.
 
 ---
 

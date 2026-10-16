@@ -615,3 +615,16 @@ textarea.fin-input {
     margin-top: 6px;
   }
 }
+.fin-mdp-temp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-align: center;
+  background: var(--fin-fond);
+  border: 2px dashed var(--fin-accent);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+  user-select: all;
+}

@@ -2,11 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { problemeMotDePasse } from "@/lib/finances";
 import { appeler } from "../components/api";
+import { ChampsMotDePasse } from "../activer/[jeton]/ActiverForm";
 
-// Connexion en 2 étapes : mot de passe, puis code reçu par courriel.
+// Connexion : mot de passe, puis code reçu par courriel.
+// Première connexion : mot de passe temporaire universel → création de son
+// propre mot de passe → code reçu par courriel.
 export default function ConnexionForm() {
-  const [etape, setEtape] = useState<"mdp" | "code">("mdp");
+  const [etape, setEtape] = useState<"mdp" | "premiere" | "code">("mdp");
+  const [prenom, setPrenom] = useState("");
+  const [besoinCourriel, setBesoinCourriel] = useState(false);
+  const [courriel, setCourriel] = useState("");
+  const [nouveau, setNouveau] = useState("");
+  const [nouveau2, setNouveau2] = useState("");
   const [identifiant, setIdentifiant] = useState("");
   const [mdp, setMdp] = useState("");
   const [code, setCode] = useState("");
@@ -19,11 +28,33 @@ export default function ConnexionForm() {
     e.preventDefault();
     setCharge(true);
     setErreur("");
-    const r = await appeler<{ courriel: string }>("/api/auth/connexion", { json: { identifiant, motDePasse: mdp } });
+    const r = await appeler<{ etape: string; courriel?: string; prenom?: string; besoinCourriel?: boolean }>("/api/auth/connexion", {
+      json: { identifiant, motDePasse: mdp },
+    });
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
-    setMasque(r.data.courriel);
     setMdp("");
+    if (r.data.etape === "premiere") {
+      setPrenom(r.data.prenom || "");
+      setBesoinCourriel(Boolean(r.data.besoinCourriel));
+      return setEtape("premiere");
+    }
+    setMasque(r.data.courriel || "");
+    setEtape("code");
+  }
+
+  async function creerMotDePasse(e: React.FormEvent) {
+    e.preventDefault();
+    const pb = problemeMotDePasse(nouveau) || (nouveau !== nouveau2 ? "Les deux mots de passe ne correspondent pas." : null);
+    if (pb) return setErreur(pb);
+    setCharge(true);
+    setErreur("");
+    const r = await appeler<{ courriel: string }>("/api/auth/premiere", { json: { motDePasse: nouveau, courriel } });
+    setCharge(false);
+    if (!r.ok) return setErreur(r.erreur);
+    setNouveau("");
+    setNouveau2("");
+    setMasque(r.data.courriel);
     setEtape("code");
   }
 
@@ -50,6 +81,28 @@ export default function ConnexionForm() {
     }
     setInfo("Un nouveau code vient d'être envoyé.");
   }
+
+  if (etape === "premiere")
+    return (
+      <form className="fin-carte" onSubmit={creerMotDePasse}>
+        <div className="fin-note">
+          👋 Bienvenue {prenom} ! C&apos;est votre <b>première connexion</b> : créez votre propre mot de passe. Le mot de passe
+          temporaire ne fonctionnera plus pour votre compte.
+        </div>
+        {erreur && <div className="fin-erreur">{erreur}</div>}
+        {besoinCourriel && (
+          <label className="fin-champ">
+            <span>Votre courriel</span>
+            <input className="fin-input" type="email" autoComplete="email" required value={courriel} onChange={(e) => setCourriel(e.target.value)} />
+            <em>Vous y recevrez un code à chaque connexion.</em>
+          </label>
+        )}
+        <ChampsMotDePasse mdp={nouveau} setMdp={setNouveau} mdp2={nouveau2} setMdp2={setNouveau2} libelle="Nouveau mot de passe" />
+        <button className="fin-btn plein" disabled={charge}>
+          {charge ? "…" : "Enregistrer et recevoir mon code"}
+        </button>
+      </form>
+    );
 
   if (etape === "code")
     return (

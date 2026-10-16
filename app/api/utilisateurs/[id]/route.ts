@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, fermerSessionsDe, utilisateurCourant } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { ROLES } from "@/lib/finances";
+import { ROLES, nomUtilisateur } from "@/lib/finances";
 import { organisationDe } from "@/lib/fin-comptes";
 
 // Modifier un compte (super admin) : { prenom?, nom?, role?, ministere?, departement?, leaderId?, actif? }
@@ -59,6 +59,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const u = await prisma.finUtilisateur.findUnique({ where: { id } });
   if (!u || !u.actif) return NextResponse.json({ error: "Compte introuvable ou désactivé." }, { status: 404 });
   const jeton = await creerJetonCompte(u.id);
-  await courrielInvitation(u.courriel, u.prenom, jeton, Boolean(u.motDePasse));
+  await courrielInvitation(u.courriel, nomUtilisateur(u), jeton, Boolean(u.motDePasse));
   return NextResponse.json({ ok: true, lien: lienFinances(`/activer/${jeton}`) });
 }

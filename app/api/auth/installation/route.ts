@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, motDePasseInstallationValide } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { normaliserIdentifiant, problemeIdentifiant } from "@/lib/finances";
+import { normaliserIdentifiant, problemeIdentifiant, nomUtilisateur } from "@/lib/finances";
 
 // Création du tout premier super admin (possible uniquement quand aucun compte
 // n'existe encore). Protégée par le mot de passe d'installation.
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   const u = await prisma.finUtilisateur.create({ data: { prenom, nom, identifiant, courriel, role: "superadmin" } });
   const jeton = await creerJetonCompte(u.id);
-  await courrielInvitation(u.courriel, u.prenom, jeton);
+  await courrielInvitation(u.courriel, nomUtilisateur(u), jeton);
   // Le lien est aussi renvoyé directement (l'installateur connaît le mot de passe d'installation).
   return NextResponse.json({ ok: true, lien: lienFinances(`/activer/${jeton}`) });
 }

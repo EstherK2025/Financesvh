@@ -17,6 +17,7 @@ export default function FinNav({ utilisateur }: Props) {
           ? [
               { href: "/toutes", label: "Toutes les demandes" },
               { href: "/utilisateurs", label: "Utilisateurs" },
+              { href: "/reglages", label: "Réglages" },
             ]
           : []),
         { href: "/compte", label: "Mon compte" },

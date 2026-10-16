@@ -12,6 +12,8 @@ import type { Role } from "./finances";
 
 const COOKIE_SESSION = "fin_session";
 const COOKIE_2FA = "fin_2fa";
+const COOKIE_PREMIERE = "fin_premiere";
+const DUREE_PREMIERE_MS = 30 * 60 * 1000; // 30 min pour choisir son mot de passe
 const DUREE_SESSION_MS = 12 * 60 * 60 * 1000; // 12 h
 const DUREE_CODE_MS = 10 * 60 * 1000; // 10 min
 export const MAX_ECHECS = 5;
@@ -103,6 +105,35 @@ export async function verifierCode(saisi: string): Promise<ResultatCode> {
   const jar = await cookies();
   jar.delete(COOKIE_2FA);
   return { ok: true, utilisateurId: c.utilisateurId };
+}
+
+// ── Première connexion (mot de passe temporaire universel) ──
+// Après le mot de passe temporaire, la personne doit choisir son propre mot de
+// passe ; ce cookie signé mémorise le compte concerné pendant 30 min.
+export async function ouvrirPremiere(utilisateurId: string) {
+  const jar = await cookies();
+  const expire = Date.now() + DUREE_PREMIERE_MS;
+  const valeur = `${utilisateurId}.${expire}`;
+  jar.set(COOKIE_PREMIERE, `${valeur}.${signer("premiere:" + valeur)}`, { ...cookieBase, maxAge: DUREE_PREMIERE_MS / 1000 });
+}
+
+export async function comptePremiere() {
+  const jar = await cookies();
+  const [id, expire, sig] = (jar.get(COOKIE_PREMIERE)?.value || "").split(".");
+  if (!id || !expire || !sig || sig !== signer(`premiere:${id}.${expire}`) || Number(expire) < Date.now()) return null;
+  const u = await prisma.finUtilisateur.findUnique({ where: { id } });
+  return u && u.actif && !u.motDePasse ? u : null;
+}
+
+export async function fermerPremiere() {
+  const jar = await cookies();
+  jar.delete(COOKIE_PREMIERE);
+}
+
+export function egalConstant(a: string, b: string): boolean {
+  const x = Buffer.from(sha256(a));
+  const y = Buffer.from(sha256(b));
+  return timingSafeEqual(x, y);
 }
 
 // ── Sessions ──

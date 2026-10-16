@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { nomUtilisateur } from "@/lib/finances";
 import { codeEnAttente, creerCode } from "@/lib/fin-auth";
 import { courrielCode } from "@/lib/fin-email";
 
@@ -8,7 +9,7 @@ export async function POST() {
   if (!c || !c.utilisateur.courriel) return NextResponse.json({ error: "Session expirée. Reconnectez-vous." }, { status: 401 });
   try {
     const code = await creerCode(c.utilisateurId);
-    await courrielCode(c.utilisateur.courriel!, c.utilisateur.prenom, code);
+    await courrielCode(c.utilisateur.courriel!, nomUtilisateur(c.utilisateur), code);
   } catch {
     return NextResponse.json({ error: "Impossible d'envoyer le code." }, { status: 502 });
   }

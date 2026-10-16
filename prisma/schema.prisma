@@ -146,3 +146,14 @@ model FinHistorique {
 
   @@index([demandeId])
 }
+
+// Réglages de la plateforme modifiables par le super administrateur
+// (clé « mdp_temporaire » : mot de passe universel de première connexion ;
+//  clé « logo » : logo Vases d'Honneur téléversé).
+model FinReglage {
+  cle       String   @id
+  texte     String?
+  donnees   Bytes?
+  typeMime  String?
+  updatedAt DateTime @updatedAt
+}

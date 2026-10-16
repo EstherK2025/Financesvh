@@ -129,9 +129,15 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
             />
           </label>
           <label className="fin-champ">
-            <span>Courriel (facultatif)</span>
-            <input className="fin-input" type="email" value={form.courriel} onChange={(e) => setForm({ ...form, courriel: e.target.value })} />
-            <em>Sinon, la personne le saisit en activant son compte.</em>
+            <span>Courriel</span>
+            <input
+              className="fin-input"
+              type="email"
+              placeholder={form.identifiant ? `${form.identifiant}@evhnb.ca` : "identifiant@evhnb.ca"}
+              value={form.courriel}
+              onChange={(e) => setForm({ ...form, courriel: e.target.value })}
+            />
+            <em>Laisser vide : {form.identifiant || "identifiant"}@evhnb.ca.</em>
           </label>
         </div>
         <div className="fin-actions">
@@ -236,7 +242,7 @@ export default function Utilisateurs({ lignes, moiId, organigramme }: { lignes: 
         <div className="fin-note" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <span>
             <b>Organigramme VH</b> : {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer (8
-            ministères, leurs départements).
+            ministères, leurs départements ; courriel identifiant@evhnb.ca).
           </span>
           <button className="fin-btn accent petit" disabled={charge} onClick={chargerOrganigramme}>
             {charge ? "…" : "Créer les comptes de l'organigramme"}

@@ -8,13 +8,19 @@ export const FIN = {
   nom: "Département des finances",
   organisation: "Vases d'Honneur",
   sigle: "VH",
-  // Logo : déposer le fichier dans public/ (sinon le sigle texte s'affiche).
-  logo: "/vh-logo.png", // symbole du logo (même fichier que Rapports VH)
+  // Logo : téléversé par le super administrateur (Réglages) ; sinon le sigle « VH ».
+  logo: "/logo",
   contactEmail: "info@eventsevhnb.ca",
 } as const;
 
 // Premier compte super admin, proposé à l'installation (crée ensuite les autres).
 export const PREMIER_ADMIN = { prenom: "GA", nom: "Maïté", identifiant: "estherk" } as const;
+
+// Courriel des comptes : identifiant@evhnb.ca
+export const DOMAINE_COURRIEL = "evhnb.ca";
+export function courrielParDefaut(identifiant: string): string {
+  return `${identifiant}@${DOMAINE_COURRIEL}`;
+}
 
 export function libelleOrg(m: string | null | undefined, d: string | null | undefined): string {
   return [m, d].filter(Boolean).join(" · ");
@@ -122,4 +128,10 @@ export function problemeMotDePasse(mdp: string): string | null {
   if (!/[a-z]/.test(mdp) || !/[A-Z]/.test(mdp) || !/\d/.test(mdp))
     return "Le mot de passe doit contenir une majuscule, une minuscule et un chiffre.";
   return null;
+}
+
+// « ab•••@evhnb.ca » : affiché à l'étape du code, sans révéler toute l'adresse.
+export function masquerCourriel(c: string): string {
+  const [nom, dom] = c.split("@");
+  return `${nom.slice(0, 2)}${"•".repeat(Math.max(1, nom.length - 2))}@${dom}`;
 }

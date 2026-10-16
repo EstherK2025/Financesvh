@@ -72,25 +72,25 @@ export async function notifier(demandeId: string, motif?: string) {
 
   switch (d.statut) {
     case "attente_leader":
-      if (d.approbateur?.actif) await courrielAApprouver(d.approbateur.courriel, d.approbateur.prenom, info);
+      if (d.approbateur?.actif) await courrielAApprouver(d.approbateur.courriel, nomUtilisateur(d.approbateur), info);
       break;
     case "attente_finances": {
       const finances = await prisma.finUtilisateur.findMany({
         where: { role: "superadmin", actif: true, id: { not: d.demandeurId } },
       });
-      await Promise.all(finances.map((f) => courrielAApprouver(f.courriel, f.prenom, info)));
+      await Promise.all(finances.map((f) => courrielAApprouver(f.courriel, nomUtilisateur(f), info)));
       if (d.approbateurId)
-        await courrielSuivi(dem.courriel, dem.prenom, info, "Votre ministère a approuvé votre demande. Elle est maintenant entre les mains des finances.");
+        await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Votre ministère a approuvé votre demande. Elle est maintenant entre les mains des finances.");
       break;
     }
     case "a_reviser":
-      await courrielSuivi(dem.courriel, dem.prenom, info, "Votre demande a été refusée et vous est renvoyée. Vous pouvez la corriger et la renvoyer, ou l'annuler.", motif);
+      await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Votre demande a été refusée et vous est renvoyée. Vous pouvez la corriger et la renvoyer, ou l'annuler.", motif);
       break;
     case "approuvee":
-      await courrielSuivi(dem.courriel, dem.prenom, info, "Bonne nouvelle : les finances ont approuvé votre demande. Le paiement suivra.");
+      await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Bonne nouvelle : les finances ont approuvé votre demande. Le paiement suivra.");
       break;
     case "payee":
-      await courrielSuivi(dem.courriel, dem.prenom, info, "Le paiement de votre demande a été effectué." + (d.referencePaiement ? ` Référence : ${d.referencePaiement}.` : ""));
+      await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Le paiement de votre demande a été effectué." + (d.referencePaiement ? ` Référence : ${d.referencePaiement}.` : ""));
       break;
   }
 }

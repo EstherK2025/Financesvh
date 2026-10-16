@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { exigerUtilisateur } from "../components/garde";
 import { NB_DEPARTEMENTS, ORGANIGRAMME } from "@/lib/organigramme";
+import { mdpTemporaire } from "@/lib/fin-reglages";
+import Link from "next/link";
 import Utilisateurs, { type LigneUtilisateur } from "./Utilisateurs";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,13 @@ export default async function UtilisateursPage() {
         <b>Administrateur</b> = un ministère (approuve en premier les demandes de ses départements) · <b>Utilisateur</b> = un
         département (fait les demandes) · <b>Super administrateur</b> = finances et gestion des comptes.
       </p>
+      <div className="fin-note">
+        🔑 <b>Mot de passe temporaire universel</b> (première connexion) :{" "}
+        <code style={{ fontSize: 16, fontWeight: 800, userSelect: "all" }}>{await mdpTemporaire()}</code>
+        <br />
+        Chaque personne se connecte avec son <b>identifiant</b> et ce mot de passe, crée son propre mot de passe, puis reçoit un
+        code sur son courriel. <Link href="/reglages">Modifier</Link>
+      </div>
       <Utilisateurs
         lignes={lignes}
         moiId={moi.id}
