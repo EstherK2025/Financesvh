@@ -3,6 +3,7 @@ import { exigerUtilisateur } from "../components/garde";
 import { NB_DEPARTEMENTS, ORGANIGRAMME } from "@/lib/organigramme";
 import { mdpTemporaire, titres } from "@/lib/fin-reglages";
 import Link from "next/link";
+import { EtiquettesInfo, TitreInfo } from "../components/Info";
 import Utilisateurs, { type LigneUtilisateur } from "./Utilisateurs";
 
 export const dynamic = "force-dynamic";
@@ -33,30 +34,20 @@ export default async function UtilisateursPage() {
   return (
     <>
       <h1>Utilisateurs</h1>
-      <ul className="fin-legende">
-        <li>
-          <b>Administrateur</b>
-          Un ministère : approuve en premier les demandes de ses départements.
-        </li>
-        <li>
-          <b>Utilisateur</b>
-          Un département : fait les demandes.
-        </li>
-        <li>
-          <b>Super administrateur</b>
-          Finances et gestion des comptes.
-        </li>
-        <li>
-          <b>Nom de la personne</b>
-          Saisi par elle-même à sa première connexion ; vous pouvez le modifier à tout moment.
-        </li>
-      </ul>
+      <EtiquettesInfo
+        items={[
+          { titre: "Administrateur", texte: "Un ministère : approuve en premier les demandes de ses départements." },
+          { titre: "Utilisateur", texte: "Un département : fait les demandes." },
+          { titre: "Super administrateur", texte: "Finances et gestion des comptes." },
+          { titre: "Nom de la personne", texte: "Saisi par elle-même à sa première connexion ; vous pouvez le modifier à tout moment." },
+        ]}
+      />
       <div className="fin-note">
-        <b className="fin-titre-note">Mot de passe temporaire universel</b>
-        <code style={{ fontSize: 16, fontWeight: 800, userSelect: "all" }}>{await mdpTemporaire()}</code>
-        <br />
-        Pour la première connexion : chaque personne se connecte avec son identifiant et ce mot de passe, puis crée son propre mot de
-        passe. <Link href="/reglages">Modifier</Link>
+        <TitreInfo titre="Mot de passe temporaire universel">
+          Pour la première connexion : chaque personne se connecte avec son identifiant et ce mot de passe, puis crée son propre mot de
+          passe. <Link href="/reglages">Modifier</Link>
+        </TitreInfo>
+        <code style={{ display: "block", fontSize: 16, fontWeight: 800, userSelect: "all" }}>{await mdpTemporaire()}</code>
       </div>
       <Utilisateurs
         lignes={lignes}

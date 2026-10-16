@@ -1,10 +1,12 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ROLES_COMPTES as ROLES } from "@/lib/finances";
 import { ORGANIGRAMME } from "@/lib/organigramme";
 import { appeler } from "../components/api";
 import ChampTitre from "../components/ChampTitre";
+import { TitreInfo } from "../components/Info";
+import Icone from "../components/Icone";
 
 // Ordre d'affichage : celui de l'organigramme, puis les autres par ordre alphabétique.
 const rang = (identifiant: string) => {
@@ -101,6 +103,25 @@ export default function Utilisateurs({
   const [lien, setLien] = useState<{ nom: string; url: string } | null>(null);
   const [info, setInfo] = useState("");
   const [charge, setCharge] = useState(false);
+  // Groupes déroulés (ministères…) : gardés après un rechargement de la page.
+  const [ouverts, setOuverts] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      setOuverts(JSON.parse(sessionStorage.getItem("fin-comptes-ouverts") || "[]"));
+    } catch {
+      /* stockage indisponible : tout replié */
+    }
+  }, []);
+  const basculer = (cle: string) =>
+    setOuverts((o) => {
+      const n = o.includes(cle) ? o.filter((k) => k !== cle) : [...o, cle];
+      try {
+        sessionStorage.setItem("fin-comptes-ouverts", JSON.stringify(n));
+      } catch {
+        /* rien */
+      }
+      return n;
+    });
 
   const supers = lignes.filter((u) => u.role === "superadmin");
   const ministeres = lignes.filter((u) => u.role === "admin").sort(trier);
@@ -394,6 +415,34 @@ export default function Utilisateurs({
     </div>
   );
 
+  // Groupe repliable : on voit le nom, la petite flèche déroule les comptes.
+  const groupe = (cle: string, titre: string, detail: string, comptes: LigneUtilisateur[], pied?: React.ReactNode) => {
+    const ouvert = ouverts.includes(cle) || comptes.some((u) => u.id === form?.id);
+    const inactifs = comptes.filter((u) => !u.actif).length;
+    const aFaire = comptes.filter((u) => u.actif && !u.active).length;
+    return (
+      <section key={cle} className={`fin-ministere fin-groupe${ouvert ? " ouvert" : ""}`}>
+        <button type="button" className="fin-groupe-tete" onClick={() => basculer(cle)} aria-expanded={ouvert}>
+          <span className="fin-groupe-nom">
+            {titre}
+            <small>
+              {detail}
+              {aFaire > 0 && ` · ${aFaire} première${aFaire > 1 ? "s" : ""} connexion${aFaire > 1 ? "s" : ""} à faire`}
+              {inactifs > 0 && ` · ${inactifs} désactivé${inactifs > 1 ? "s" : ""}`}
+            </small>
+          </span>
+          <Icone nom="chevron" taille={20} className="fin-groupe-fleche" />
+        </button>
+        {ouvert && (
+          <div className="fin-groupe-corps">
+            {tableau(comptes.map(ligne))}
+            {pied}
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
     <>
       {erreur && <div className="fin-erreur">{erreur}</div>}
@@ -412,9 +461,8 @@ export default function Utilisateurs({
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
         >
           <span>
-            <b className="fin-titre-note">Organigramme VH</b>
+            <TitreInfo titre="Organigramme VH">8 ministères et leurs départements ; courriel identifiant@evhnb.ca.</TitreInfo>
             {organigramme.manquants} compte{organigramme.manquants > 1 ? "s" : ""} sur {organigramme.total} à créer
-            (8 ministères, leurs départements ; courriel identifiant@evhnb.ca).
           </span>
           <button className="fin-btn accent petit" disabled={charge} onClick={chargerOrganigramme}>
             {charge ? "…" : "Créer les comptes de l'organigramme"}
@@ -437,33 +485,21 @@ export default function Utilisateurs({
 
       {ministeres.map((m) => {
         const deps = lignes.filter((u) => u.role === "utilisateur" && u.leaderId === m.id).sort(trier);
-        return (
-          <section key={m.id} className="fin-ministere">
-            <h2>
-              {m.ministere}{" "}
-              <span>
-                {deps.length} département{deps.length > 1 ? "s" : ""}
-              </span>
-            </h2>
-            {tableau([ligne(m), ...deps.map(ligne)])}
-            <button className="fin-btn blanc petit" style={{ marginTop: 8 }} onClick={() => ouvrir("nouveau", vide("utilisateur", m.id))}>
-              + Ajouter un département à {m.ministere}
-            </button>
-          </section>
+        return groupe(
+          m.id,
+          m.ministere,
+          `${deps.length} département${deps.length > 1 ? "s" : ""}`,
+          [m, ...deps],
+          <button className="fin-btn blanc petit" style={{ marginTop: 8 }} onClick={() => ouvrir("nouveau", vide("utilisateur", m.id))}>
+            + Ajouter un département à {m.ministere}
+          </button>,
         );
       })}
 
-      {sansMinistere.length > 0 && (
-        <section className="fin-ministere">
-          <h2>Utilisateurs sans ministère</h2>
-          {tableau(sansMinistere.map(ligne))}
-        </section>
-      )}
+      {sansMinistere.length > 0 &&
+        groupe("sans-ministere", "Utilisateurs sans ministère", `${sansMinistere.length} compte${sansMinistere.length > 1 ? "s" : ""}`, sansMinistere)}
 
-      <section className="fin-ministere">
-        <h2>Super administrateur</h2>
-        {tableau(supers.map(ligne))}
-      </section>
+      {groupe("super", "Super administrateur", `${supers.length} compte${supers.length > 1 ? "s" : ""}`, supers)}
     </>
   );
 }
