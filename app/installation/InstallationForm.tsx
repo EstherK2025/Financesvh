@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PREMIER_ADMIN } from "@/lib/finances";
 import { appeler } from "../components/api";
 import ChampTitre from "../components/ChampTitre";
+import ChampMotDePasse from "../components/ChampMotDePasse";
 
 export default function InstallationForm({ titres }: { titres: string[] }) {
   const [f, setF] = useState({ motDePasseInstallation: "", ...PREMIER_ADMIN, courriel: "" } as Record<string, string>);
@@ -38,7 +39,7 @@ export default function InstallationForm({ titres }: { titres: string[] }) {
       {erreur && <div className="fin-erreur">{erreur}</div>}
       <label className="fin-champ">
         <span>Mot de passe d&apos;installation</span>
-        <input className="fin-input" type="password" required value={f.motDePasseInstallation} onChange={maj("motDePasseInstallation")} />
+        <ChampMotDePasse required value={f.motDePasseInstallation} onChange={maj("motDePasseInstallation")} />
         <em>Valeur de la variable FIN_SETUP_PASSWORD (réglée dans Vercel).</em>
       </label>
       <ChampTitre valeur={f.titre} onChange={(v) => setF({ ...f, titre: v })} titres={titres} />

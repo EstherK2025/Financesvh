@@ -4,6 +4,7 @@ import { useState } from "react";
 import { problemeMotDePasse } from "@/lib/finances";
 import { appeler } from "../components/api";
 import { ChampsMotDePasse } from "../activer/[jeton]/ActiverForm";
+import ChampMotDePasse from "../components/ChampMotDePasse";
 
 export default function MotDePasseForm() {
   const [actuel, setActuel] = useState("");
@@ -35,7 +36,7 @@ export default function MotDePasseForm() {
       {ok && <div className="fin-succes">Mot de passe modifié. Vos autres appareils ont été déconnectés.</div>}
       <label className="fin-champ">
         <span>Mot de passe actuel</span>
-        <input className="fin-input" type="password" autoComplete="current-password" required value={actuel} onChange={(e) => setActuel(e.target.value)} />
+        <ChampMotDePasse autoComplete="current-password" required value={actuel} onChange={(e) => setActuel(e.target.value)} />
       </label>
       <ChampsMotDePasse mdp={mdp} setMdp={setMdp} mdp2={mdp2} setMdp2={setMdp2} libelle="Nouveau mot de passe" />
       <button className="fin-btn" disabled={charge}>

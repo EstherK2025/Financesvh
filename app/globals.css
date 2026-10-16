@@ -1457,3 +1457,35 @@ textarea.fin-input {
     animation: none;
   }
 }
+
+/* Mot de passe : petit œil pour afficher / masquer */
+.fin-mdp-champ,
+.fin-champ > .fin-mdp-champ {
+  position: relative;
+  display: block;
+  margin-bottom: 0;
+  font-weight: inherit;
+}
+.fin-mdp-champ .fin-input {
+  padding-right: 48px;
+}
+.fin-mdp-oeil {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border: 0;
+  background: none;
+  border-radius: 10px;
+  color: var(--fin-gris);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.fin-mdp-oeil:hover,
+.fin-mdp-oeil[aria-pressed="true"] {
+  color: var(--fin-primaire);
+}
