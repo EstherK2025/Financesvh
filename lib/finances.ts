@@ -178,3 +178,19 @@ export function libelleCompte(u: { role: string; ministere?: string | null; depa
   if (u.role === "delegue") return "Approbateur externe";
   return u.identifiant || "Compte";
 }
+
+// Identifiant créé à la première connexion : « prenom.nom » (minuscules, sans
+// accents ; espaces et autres caractères → tiret). Ex. « Marie-Ève Côté » → « marie-eve.cote ».
+function morceauIdentifiant(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+export function identifiantDepuisNom(prenom: string, nom: string): string {
+  const p = morceauIdentifiant(prenom);
+  const n = morceauIdentifiant(nom);
+  return [p, n].filter(Boolean).join(".").slice(0, 30).replace(/[.-]+$/, "");
+}

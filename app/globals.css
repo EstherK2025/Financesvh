@@ -887,7 +887,9 @@ textarea.fin-input {
 /* ═══ Divers ═══ */
 .fin-mdp-temp {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 26px;
+  font-size: clamp(17px, 5.4vw, 26px);
+  white-space: nowrap;
+  overflow-x: auto;
   font-weight: 800;
   letter-spacing: 2px;
   text-align: center;
@@ -1253,4 +1255,13 @@ textarea.fin-input {
   width: auto;
   display: block;
   mix-blend-mode: multiply; /* le fond blanc du logo se fond dans la page */
+}
+
+/* Zone sensible (Réglages) */
+.fin-zone-sensible {
+  border: 1.5px solid rgba(174, 48, 47, 0.45);
+  background: linear-gradient(160deg, #fff, var(--fin-rouge-clair));
+}
+.fin-zone-sensible h2 {
+  color: var(--fin-rouge);
 }

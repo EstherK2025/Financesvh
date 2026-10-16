@@ -326,6 +326,18 @@ export default function Utilisateurs({
                 Lien mot de passe
               </button>
             )}
+            {u.active && (
+              <button
+                className="fin-btn blanc petit"
+                onClick={() =>
+                  confirm(
+                    `Réinitialiser l'accès de « ${titreCompte(u)} » ?\n\nLe mot de passe et l'Authenticator sont effacés : à la prochaine connexion, il faudra l'identifiant actuel (${u.identifiant}) et le mot de passe temporaire universel, puis le nom et un nouveau mot de passe.${u.id === moiId ? "\n\nATTENTION : c'est votre propre compte, vous serez déconnecté(e)." : ""}`,
+                  ) && modifier(u.id, { reinitialiserAcces: true })
+                }
+              >
+                Réinitialiser l&apos;accès
+              </button>
+            )}
             {u.id !== moiId && (
               <button className={`fin-btn petit ${u.actif ? "non" : "blanc"}`} onClick={() => modifier(u.id, { actif: !u.actif })}>
                 {u.actif ? "Désactiver" : "Réactiver"}

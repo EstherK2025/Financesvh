@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { problemeMotDePasse } from "@/lib/finances";
+import { identifiantDepuisNom, problemeMotDePasse } from "@/lib/finances";
 import { appeler } from "../components/api";
 import ChampTitre from "../components/ChampTitre";
 import { ChampsMotDePasse } from "../activer/[jeton]/ActiverForm";
 
-type Etape = "mdp" | "premiere" | "enrolement" | "code";
-type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; compte?: string; titre?: string; titres?: string[]; prenom?: string; nom?: string };
+type Etape = "mdp" | "premiere" | "enrolement" | "code" | "identifiant";
+type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; identifiant?: string; compte?: string; titre?: string; titres?: string[]; prenom?: string; nom?: string };
 
 // Connexion : identifiant + mot de passe, puis (si la double authentification
 // est activée) code de l'application Authenticator.
@@ -26,6 +26,7 @@ export default function ConnexionForm() {
   const [nouveau, setNouveau] = useState("");
   const [nouveau2, setNouveau2] = useState("");
   const [code, setCode] = useState("");
+  const [nouvelIdentifiant, setNouvelIdentifiant] = useState("");
   const [qr, setQr] = useState<{ qr: string; cle: string; lien: string } | null>(null);
   const [erreur, setErreur] = useState("");
   const [charge, setCharge] = useState(false);
@@ -86,6 +87,9 @@ export default function ConnexionForm() {
     if (!r.ok) return setErreur(r.erreur);
     setNouveau("");
     setNouveau2("");
+    setNouvelIdentifiant(r.data.identifiant || "");
+    // Connecté directement : on montre d'abord le nouvel identifiant à noter.
+    if (r.data.etape === "connecte" && r.data.identifiant) return setEtape("identifiant");
     suivre(r.data);
   }
 
@@ -123,10 +127,11 @@ export default function ConnexionForm() {
       <form className="fin-carte" onSubmit={creerMotDePasse}>
         <div className="fin-note">
           👋 Bienvenue ! C&apos;est la <b>première connexion</b> du compte <b>{compte}</b>. Indiquez votre nom (responsable de ce
-          compte) et créez votre propre mot de passe. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
+          compte) et créez votre propre mot de passe. Votre identifiant deviendra automatiquement <b>prénom.nom</b>. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
         <ChampTitre valeur={titre} onChange={setTitre} titres={listeTitres} />
+        {/* L'identifiant « prenom.nom » se crée automatiquement. */}
         <div className="fin-grille2">
           <label className="fin-champ">
             <span>Prénom</span>
@@ -137,6 +142,11 @@ export default function ConnexionForm() {
             <input className="fin-input" required autoComplete="family-name" placeholder="Ex. Doe" value={nomFamille} onChange={(e) => setNomFamille(e.target.value)} />
           </label>
         </div>
+        {identifiantDepuisNom(prenom, nomFamille).length >= 3 && (
+          <div className="fin-note" style={{ marginTop: -4 }}>
+            Votre identifiant de connexion sera : <b>{identifiantDepuisNom(prenom, nomFamille)}</b>
+          </div>
+        )}
         <ChampsMotDePasse mdp={nouveau} setMdp={setNouveau} mdp2={nouveau2} setMdp2={setNouveau2} libelle="Nouveau mot de passe" />
         <button className="fin-btn plein" disabled={charge}>
           {charge ? "…" : "Enregistrer mon mot de passe"}
@@ -144,9 +154,30 @@ export default function ConnexionForm() {
       </form>
     );
 
+  if (etape === "identifiant")
+    return (
+      <div className="fin-carte" style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 15, marginBottom: 10 }}>✅ Votre compte est prêt. Votre identifiant de connexion est désormais :</div>
+        <div className="fin-mdp-temp">{nouvelIdentifiant}</div>
+        <p style={{ fontSize: 13.5, color: "var(--fin-gris)", marginBottom: 16 }}>
+          Notez-le : vous l&apos;utiliserez avec votre nouveau mot de passe pour vous connecter.
+        </p>
+        <button className="fin-btn plein" onClick={() => (window.location.href = "/")}>
+          Entrer dans la plateforme
+        </button>
+      </div>
+    );
+
+  const noteIdentifiant = nouvelIdentifiant && (
+    <div className="fin-succes">
+      Votre identifiant de connexion est désormais <b>{nouvelIdentifiant}</b> — notez-le.
+    </div>
+  );
+
   if (etape === "enrolement")
     return (
       <form className="fin-carte" onSubmit={envoyerCode}>
+        {noteIdentifiant}
         <div className="fin-note">
           🔐 <b>Double authentification</b> — à faire une seule fois : configurez l&apos;application <b>Authenticator</b> sur votre
           téléphone (Google Authenticator ou Microsoft Authenticator, gratuites).
