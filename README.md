@@ -127,8 +127,9 @@ saisir le courriel et `FIN_SETUP_PASSWORD` (en local, sans variable :
 `installation`) → le lien pour choisir le mot de passe s'affiche à l'écran.
 Ce compte crée ensuite tous les autres.
 
-Sans `RESEND_API_KEY`, les courriels sont simulés : le code de connexion et les
-liens d'activation s'affichent dans la console du serveur.
+Sans `RESEND_API_KEY`, les courriels (notifications, liens d'activation) sont
+simulés : ils s'affichent dans la console du serveur. La connexion n'en dépend
+pas (la double authentification passe par l'application Authenticator).
 
 ## Mise en ligne (Vercel)
 
