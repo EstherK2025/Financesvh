@@ -1,0 +1,61 @@
+"use client";
+
+import { useState } from "react";
+import { appeler } from "../components/api";
+
+export default function InstallationForm() {
+  const [f, setF] = useState({ motDePasseInstallation: "", prenom: "", nom: "", courriel: "" });
+  const [erreur, setErreur] = useState("");
+  const [lien, setLien] = useState("");
+  const [charge, setCharge] = useState(false);
+  const maj = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+
+  async function valider(e: React.FormEvent) {
+    e.preventDefault();
+    setCharge(true);
+    setErreur("");
+    const r = await appeler<{ lien: string }>("/api/auth/installation", { json: f });
+    setCharge(false);
+    if (!r.ok) return setErreur(r.erreur);
+    setLien(r.data.lien);
+  }
+
+  if (lien)
+    return (
+      <div className="fin-carte">
+        <div className="fin-succes">Compte créé. Un courriel d&apos;activation a été envoyé.</div>
+        <p style={{ fontSize: 13, marginBottom: 12 }}>Vous pouvez aussi activer le compte directement :</p>
+        <a href={lien} className="fin-btn plein">
+          Choisir le mot de passe
+        </a>
+      </div>
+    );
+
+  return (
+    <form className="fin-carte" onSubmit={valider}>
+      {erreur && <div className="fin-erreur">{erreur}</div>}
+      <label className="fin-champ">
+        <span>Mot de passe d&apos;installation</span>
+        <input className="fin-input" type="password" required value={f.motDePasseInstallation} onChange={maj("motDePasseInstallation")} />
+        <em>Valeur de la variable FIN_SETUP_PASSWORD (réglée dans Vercel).</em>
+      </label>
+      <div className="fin-grille2">
+        <label className="fin-champ">
+          <span>Prénom</span>
+          <input className="fin-input" required value={f.prenom} onChange={maj("prenom")} />
+        </label>
+        <label className="fin-champ">
+          <span>Nom</span>
+          <input className="fin-input" required value={f.nom} onChange={maj("nom")} />
+        </label>
+      </div>
+      <label className="fin-champ">
+        <span>Courriel</span>
+        <input className="fin-input" type="email" required value={f.courriel} onChange={maj("courriel")} />
+      </label>
+      <button className="fin-btn plein" disabled={charge}>
+        {charge ? "…" : "Créer le super admin"}
+      </button>
+    </form>
+  );
+}

@@ -1,0 +1,141 @@
+// Schéma de la base de données — Finances VH (Postgres, ex. Neon).
+// Après une modification : `npx prisma db push`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────────────────────────────────────
+// DÉPARTEMENT DES FINANCES — plateforme de demandes de décaissement et de
+// remboursement (/finances). Comptes nominatifs (mot de passe + code de
+// vérification par courriel), circuit d'approbation à 2 niveaux :
+//   demandeur → son leader → finances (super admins) → payé.
+// Un refus renvoie la demande au demandeur (révision ou annulation).
+// Modèles préfixés « Fin » pour cohabiter avec les autres sites.
+// ───────────────────────────────────────────────────────────
+
+// Compte utilisateur. 3 niveaux : "utilisateur" | "leader" | "superadmin".
+model FinUtilisateur {
+  id           String   @id @default(cuid())
+  prenom       String
+  nom          String
+  courriel     String   @unique // en minuscules
+  role         String   @default("utilisateur") // "utilisateur" | "leader" | "superadmin"
+  actif        Boolean  @default(true)
+  motDePasse   String? // hash scrypt "sel:hash" ; null tant que le compte n'est pas activé
+  // Leader qui approuve en premier les demandes de cette personne.
+  leaderId     String?
+  leader       FinUtilisateur?  @relation("FinLeader", fields: [leaderId], references: [id], onDelete: SetNull)
+  equipe       FinUtilisateur[] @relation("FinLeader")
+  // Lien d'activation / de réinitialisation du mot de passe (hash du jeton).
+  jetonHash    String?  @unique
+  jetonExpire  DateTime?
+  // Protection contre les essais de mot de passe répétés.
+  echecs       Int      @default(0)
+  verrouJusqua DateTime?
+  derniereConnexion DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions     FinSession[]
+  codes        FinCode[]
+  demandes     FinDemande[]    @relation("FinDemandeur")
+  aApprouver   FinDemande[]    @relation("FinApprobateur")
+  historique   FinHistorique[]
+}
+
+// Session ouverte après la double authentification (cookie = jeton aléatoire,
+// seul son hash est stocké).
+model FinSession {
+  id            String         @id @default(cuid())
+  jetonHash     String         @unique
+  utilisateurId String
+  utilisateur   FinUtilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  expire        DateTime
+  createdAt     DateTime       @default(now())
+
+  @@index([utilisateurId])
+}
+
+// Code de vérification à 6 chiffres envoyé par courriel (2ᵉ facteur).
+model FinCode {
+  id            String         @id @default(cuid())
+  utilisateurId String
+  utilisateur   FinUtilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  codeHash      String
+  expire        DateTime
+  tentatives    Int            @default(0)
+  utilise       Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+
+  @@index([utilisateurId])
+}
+
+// Demande de décaissement (avance) ou de remboursement (facture obligatoire).
+// Statuts : "attente_leader" → "attente_finances" → "approuvee" → "payee"
+//           refus à n'importe quelle étape → "a_reviser" (retour au demandeur)
+//           le demandeur peut alors corriger et renvoyer, ou "annulee".
+model FinDemande {
+  id             String         @id @default(cuid())
+  numero         Int            @unique @default(autoincrement()) // référence FIN-0001
+  type           String // "decaissement" | "remboursement"
+  categorie      String
+  objet          String
+  description    String?
+  montant        Int // en cents ($CAD)
+  dateDepense    DateTime?
+  beneficiaire   String? // à qui verser l'argent (si différent du demandeur)
+  modePaiement   String         @default("interac") // "interac" | "cheque" | "virement" | "comptant"
+  statut         String         @default("attente_leader")
+  demandeurId    String
+  demandeur      FinUtilisateur @relation("FinDemandeur", fields: [demandeurId], references: [id])
+  // Personne qui approuve à la 1ʳᵉ étape (leader du demandeur, ou destinataire
+  // choisi par un super admin). null = la demande va directement aux finances.
+  approbateurId  String?
+  approbateur    FinUtilisateur? @relation("FinApprobateur", fields: [approbateurId], references: [id], onDelete: SetNull)
+  motifRefus     String?
+  referencePaiement String?
+  payeLe         DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  pieces     FinPiece[]
+  historique FinHistorique[]
+
+  @@index([demandeurId])
+  @@index([approbateurId])
+  @@index([statut])
+}
+
+// Pièce jointe (facture, reçu, devis) stockée en base.
+model FinPiece {
+  id        String     @id @default(cuid())
+  demandeId String
+  demande   FinDemande @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+  nom       String
+  typeMime  String
+  taille    Int
+  donnees   Bytes
+  createdAt DateTime   @default(now())
+
+  @@index([demandeId])
+}
+
+// Journal de chaque étape (soumission, approbation, refus, paiement…).
+model FinHistorique {
+  id        String         @id @default(cuid())
+  demandeId String
+  demande   FinDemande     @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+  auteurId  String?
+  auteur    FinUtilisateur? @relation(fields: [auteurId], references: [id], onDelete: SetNull)
+  action    String // "soumise" | "approuvee_leader" | "approuvee_finances" | "refusee" | "resoumise" | "annulee" | "payee"
+  commentaire String?
+  createdAt DateTime       @default(now())
+
+  @@index([demandeId])
+}

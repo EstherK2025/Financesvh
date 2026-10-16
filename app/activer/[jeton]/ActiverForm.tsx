@@ -1,0 +1,61 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { problemeMotDePasse } from "@/lib/finances";
+import { appeler } from "../../components/api";
+
+export default function ActiverForm({ jeton }: { jeton: string }) {
+  const [mdp, setMdp] = useState("");
+  const [mdp2, setMdp2] = useState("");
+  const [erreur, setErreur] = useState("");
+  const [fait, setFait] = useState(false);
+  const [charge, setCharge] = useState(false);
+
+  async function valider(e: React.FormEvent) {
+    e.preventDefault();
+    const pb = problemeMotDePasse(mdp) || (mdp !== mdp2 ? "Les deux mots de passe ne correspondent pas." : null);
+    if (pb) return setErreur(pb);
+    setCharge(true);
+    const r = await appeler("/api/auth/activer", { json: { jeton, motDePasse: mdp } });
+    setCharge(false);
+    if (!r.ok) return setErreur(r.erreur);
+    setFait(true);
+  }
+
+  if (fait)
+    return (
+      <div className="fin-carte">
+        <div className="fin-succes">Mot de passe enregistré.</div>
+        <Link href="/connexion" className="fin-btn plein">
+          Se connecter
+        </Link>
+      </div>
+    );
+
+  return (
+    <form className="fin-carte" onSubmit={valider}>
+      {erreur && <div className="fin-erreur">{erreur}</div>}
+      <ChampsMotDePasse mdp={mdp} setMdp={setMdp} mdp2={mdp2} setMdp2={setMdp2} />
+      <button className="fin-btn plein" disabled={charge}>
+        {charge ? "…" : "Enregistrer"}
+      </button>
+    </form>
+  );
+}
+
+export function ChampsMotDePasse(p: { mdp: string; setMdp: (v: string) => void; mdp2: string; setMdp2: (v: string) => void; libelle?: string }) {
+  return (
+    <>
+      <label className="fin-champ">
+        <span>{p.libelle || "Mot de passe"}</span>
+        <input className="fin-input" type="password" autoComplete="new-password" required value={p.mdp} onChange={(e) => p.setMdp(e.target.value)} />
+        <em>10 caractères minimum, avec une majuscule, une minuscule et un chiffre.</em>
+      </label>
+      <label className="fin-champ">
+        <span>Confirmer</span>
+        <input className="fin-input" type="password" autoComplete="new-password" required value={p.mdp2} onChange={(e) => p.setMdp2(e.target.value)} />
+      </label>
+    </>
+  );
+}
