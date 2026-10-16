@@ -113,7 +113,7 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
           </Link>
         ))}
       </div>
-      <DemandeListe demandes={demandes} avecDemandeur vide="Aucune demande pour ces filtres." />
+      <DemandeListe demandes={demandes} avecDemandeur pdf vide="Aucune demande pour ces filtres." />
     </>
   );
 }

@@ -115,7 +115,7 @@ export default async function TableauDeBord() {
           <h2>À approuver — finances</h2>
           <DemandeListe demandes={aApprouverFinances} avecDemandeur vide="Aucune demande en attente des finances." />
           <h2>Approuvées — à payer</h2>
-          <DemandeListe demandes={aPayer} avecDemandeur vide="Aucun paiement en attente." />
+          <DemandeListe demandes={aPayer} avecDemandeur pdf vide="Aucun paiement en attente." />
         </>
       )}
 

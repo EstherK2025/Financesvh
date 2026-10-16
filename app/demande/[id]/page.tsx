@@ -45,6 +45,16 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
         <h1 style={{ marginBottom: 0 }}>{reference(d.numero)}</h1>
         <StatutTag statut={d.statut} />
       </div>
+      {moi.role === "superadmin" && (
+        <div className="fin-actions" style={{ margin: "8px 0 4px" }}>
+          <a href={`/api/demandes/${d.id}/pdf`} target="_blank" rel="noopener" className="fin-btn blanc petit">
+            🖨️ Imprimer (PDF)
+          </a>
+          <a href={`/api/demandes/${d.id}/pdf?telecharger=1`} className="fin-btn blanc petit">
+            ⬇️ Télécharger pour classer
+          </a>
+        </div>
+      )}
       <p className="sous" style={{ marginTop: 4 }}>
         {TYPES[d.type as TypeDemande]} · {d.categorie} · soumise le {date(d.createdAt)}
       </p>

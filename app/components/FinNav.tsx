@@ -13,6 +13,7 @@ export default function FinNav({ utilisateur }: Props) {
     ? [
         { href: "/", label: "Tableau de bord" },
         { href: "/nouvelle", label: "Nouvelle demande" },
+        ...(utilisateur.role === "admin" ? [{ href: "/ministere", label: "Mon ministère" }] : []),
         ...(utilisateur.role === "superadmin"
           ? [
               { href: "/toutes", label: "Toutes les demandes" },

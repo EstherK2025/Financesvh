@@ -31,6 +31,24 @@ Département (utilisateur) ──▶ son ministère (administrateur) ──▶ f
 - Personne n'approuve sa propre demande. Le **super administrateur choisit à qui
   envoyer sa demande** (1ʳᵉ approbation).
 
+## Page « Mon ministère » (administrateur)
+
+L'administrateur d'un ministère voit **toutes les demandes de ses
+départements** : à approuver, totaux par département, liste filtrable par
+département et par statut. Depuis chaque demande, il **approuve** (elle passe
+aux finances) ou **refuse avec un motif** (elle retourne au département qui
+l'a faite, pour correction ou annulation).
+
+## Fiche PDF de chaque demande (super administrateur)
+
+Sur chaque demande : **« Imprimer (PDF) »** et **« Télécharger pour classer »**
+(aussi la colonne ⬇️ de « Toutes les demandes »). Le PDF contient le logo, le
+montant, l'objet, le **nom du demandeur** avec son ministère et son
+département, les **noms et dates des approbations** (ministère, finances,
+paiement et référence), l'historique complet, des lignes de signature, puis
+les **factures jointes** (photos et pages des PDF). Nom du fichier :
+`FIN-0001 - Departement Tribus - Objet.pdf`.
+
 ## Niveaux (alignés sur Rapports VH)
 
 | Niveau | Correspond à | Peut… |
