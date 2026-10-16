@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, utilisateurCourant } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { ROLES, courrielParDefaut, normaliserIdentifiant, problemeIdentifiant, nomUtilisateur } from "@/lib/finances";
+import { ROLES, courrielParDefaut, normaliserIdentifiant, problemeIdentifiant, nomUtilisateur, titreValide } from "@/lib/finances";
 import { organisationDe } from "@/lib/fin-comptes";
 
 // Création d'un compte (super admin). Le nom de la personne est facultatif :
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const o = await organisationDe(role, b);
   if (!o.ok) return NextResponse.json({ error: o.erreur }, { status: 400 });
 
-  const u = await prisma.finUtilisateur.create({ data: { prenom, nom, identifiant, courriel: courriel || null, role, ...o.org } });
+  const u = await prisma.finUtilisateur.create({ data: { titre: titreValide(b.titre), prenom, nom, identifiant, courriel: courriel || null, role, ...o.org } });
   const jeton = await creerJetonCompte(u.id);
   await courrielInvitation(u.courriel, nomUtilisateur(u), jeton);
   return NextResponse.json({ ok: true, id: u.id, lien: lienFinances(`/activer/${jeton}`) });

@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { problemeMotDePasse } from "@/lib/finances";
 import { appeler } from "../components/api";
+import ChampTitre from "../components/ChampTitre";
 import { ChampsMotDePasse } from "../activer/[jeton]/ActiverForm";
 
 type Etape = "mdp" | "premiere" | "enrolement" | "code";
-type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; compte?: string; prenom?: string; nom?: string };
+type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; compte?: string; titre?: string; prenom?: string; nom?: string };
 
 // Connexion : identifiant + mot de passe, puis (si la double authentification
 // est activée) code de l'application Authenticator.
@@ -18,6 +19,7 @@ export default function ConnexionForm() {
   const [identifiant, setIdentifiant] = useState("");
   const [mdp, setMdp] = useState("");
   const [compte, setCompte] = useState("");
+  const [titre, setTitre] = useState("");
   const [prenom, setPrenom] = useState("");
   const [nomFamille, setNomFamille] = useState("");
   const [nouveau, setNouveau] = useState("");
@@ -36,6 +38,7 @@ export default function ConnexionForm() {
     }
     if (s.etape === "premiere") {
       setCompte(s.compte || "");
+      setTitre(s.titre || "");
       setPrenom(s.prenom || "");
       setNomFamille(s.nom || "");
     }
@@ -76,7 +79,7 @@ export default function ConnexionForm() {
     if (pb) return setErreur(pb);
     setCharge(true);
     setErreur("");
-    const r = await appeler<Suite>("/api/auth/premiere", { json: { motDePasse: nouveau, prenom, nom: nomFamille } });
+    const r = await appeler<Suite>("/api/auth/premiere", { json: { motDePasse: nouveau, titre, prenom, nom: nomFamille } });
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
     setNouveau("");
@@ -121,14 +124,15 @@ export default function ConnexionForm() {
           compte) et créez votre propre mot de passe. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
+        <ChampTitre valeur={titre} onChange={setTitre} />
         <div className="fin-grille2">
           <label className="fin-champ">
-            <span>Prénom (ou titre + prénom)</span>
-            <input className="fin-input" required autoComplete="given-name" placeholder="Ex. AP Cindy" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
+            <span>Prénom</span>
+            <input className="fin-input" required autoComplete="given-name" placeholder="Ex. John" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
           </label>
           <label className="fin-champ">
             <span>Nom</span>
-            <input className="fin-input" required autoComplete="family-name" value={nomFamille} onChange={(e) => setNomFamille(e.target.value)} />
+            <input className="fin-input" required autoComplete="family-name" placeholder="Ex. Doe" value={nomFamille} onChange={(e) => setNomFamille(e.target.value)} />
           </label>
         </div>
         <ChampsMotDePasse mdp={nouveau} setMdp={setNouveau} mdp2={nouveau2} setMdp2={setNouveau2} libelle="Nouveau mot de passe" />

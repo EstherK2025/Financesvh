@@ -19,7 +19,7 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
     prisma.finDemande.findMany({
       where: { createdAt: periode, ...(statut ? { statut } : {}), ...(type ? { type } : {}) },
       orderBy: { createdAt: "desc" },
-      include: { demandeur: { select: { prenom: true, nom: true, ministere: true, departement: true } } },
+      include: { demandeur: { select: { titre: true, prenom: true, nom: true, ministere: true, departement: true } } },
       take: 500,
     }),
     prisma.finDemande.groupBy({

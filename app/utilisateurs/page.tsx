@@ -15,6 +15,7 @@ export default async function UtilisateursPage() {
   });
   const lignes: LigneUtilisateur[] = liste.map((u) => ({
     id: u.id,
+    titre: u.titre || "",
     prenom: u.prenom,
     nom: u.nom,
     identifiant: u.identifiant || "",

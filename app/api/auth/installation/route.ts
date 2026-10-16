@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, motDePasseInstallationValide } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { courrielParDefaut, normaliserIdentifiant, problemeIdentifiant, nomUtilisateur } from "@/lib/finances";
+import { courrielParDefaut, normaliserIdentifiant, problemeIdentifiant, nomUtilisateur, titreValide } from "@/lib/finances";
 
 // Création du tout premier super admin (possible uniquement quand aucun compte
 // n'existe encore). Protégée par le mot de passe d'installation.
@@ -18,12 +18,11 @@ export async function POST(req: Request) {
   const identifiantSaisi = normaliserIdentifiant(b.identifiant);
   const courriel = String(b.courriel || "").trim().toLowerCase().slice(0, 160) || courrielParDefaut(identifiantSaisi);
   const identifiant = normaliserIdentifiant(b.identifiant);
-  if (!prenom || !nom || !courriel.includes("@"))
-    return NextResponse.json({ error: "Prénom et nom requis." }, { status: 400 });
+  if (!prenom || !courriel.includes("@")) return NextResponse.json({ error: "Prénom requis." }, { status: 400 });
   const pb = problemeIdentifiant(identifiant);
   if (pb) return NextResponse.json({ error: pb }, { status: 400 });
 
-  const u = await prisma.finUtilisateur.create({ data: { prenom, nom, identifiant, courriel, role: "superadmin" } });
+  const u = await prisma.finUtilisateur.create({ data: { titre: titreValide(b.titre), prenom, nom, identifiant, courriel, role: "superadmin" } });
   const jeton = await creerJetonCompte(u.id);
   await courrielInvitation(u.courriel, nomUtilisateur(u), jeton);
   // Le lien est aussi renvoyé directement (l'installateur connaît le mot de passe d'installation).

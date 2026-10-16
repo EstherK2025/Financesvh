@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       ok: true,
       etape: "premiere",
       compte: libelleCompte(u),
+      titre: u.titre || "",
       prenom: u.prenom,
       nom: u.nom,
     });

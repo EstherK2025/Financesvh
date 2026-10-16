@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PREMIER_ADMIN } from "@/lib/finances";
 import { appeler } from "../components/api";
+import ChampTitre from "../components/ChampTitre";
 
 export default function InstallationForm() {
   const [f, setF] = useState({ motDePasseInstallation: "", ...PREMIER_ADMIN, courriel: "" } as Record<string, string>);
@@ -40,14 +41,15 @@ export default function InstallationForm() {
         <input className="fin-input" type="password" required value={f.motDePasseInstallation} onChange={maj("motDePasseInstallation")} />
         <em>Valeur de la variable FIN_SETUP_PASSWORD (réglée dans Vercel).</em>
       </label>
+      <ChampTitre valeur={f.titre} onChange={(v) => setF({ ...f, titre: v })} />
       <div className="fin-grille2">
         <label className="fin-champ">
           <span>Prénom</span>
-          <input className="fin-input" required value={f.prenom} onChange={maj("prenom")} />
+          <input className="fin-input" required value={f.prenom} onChange={maj("prenom")} placeholder="Ex. John" />
         </label>
         <label className="fin-champ">
           <span>Nom</span>
-          <input className="fin-input" required value={f.nom} onChange={maj("nom")} />
+          <input className="fin-input" value={f.nom} onChange={maj("nom")} placeholder="Ex. Doe" />
         </label>
       </div>
       <label className="fin-champ">

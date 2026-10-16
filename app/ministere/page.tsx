@@ -28,7 +28,7 @@ export default async function MinisterePage({ searchParams }: { searchParams: Pr
     prisma.finDemande.findMany({
       where: filtreMinistere,
       orderBy: { createdAt: "desc" },
-      include: { demandeur: { select: { prenom: true, nom: true, ministere: true, departement: true } } },
+      include: { demandeur: { select: { titre: true, prenom: true, nom: true, ministere: true, departement: true } } },
     }),
   ]);
   const departement = sp.departement || "";

@@ -18,6 +18,8 @@ export default async function ComptePage() {
         <dl className="fin-dl">
           <dt>Nom</dt>
           <dd>{nomUtilisateur(moi)}</dd>
+          <dt>Titre</dt>
+          <dd>{moi.titre || "—"}</dd>
           <dt>Identifiant</dt>
           <dd>{moi.identifiant || "—"}</dd>
           <dt>Courriel</dt>

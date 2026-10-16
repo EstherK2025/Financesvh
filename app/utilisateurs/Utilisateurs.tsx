@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { ROLES } from "@/lib/finances";
 import { ORGANIGRAMME } from "@/lib/organigramme";
 import { appeler } from "../components/api";
+import ChampTitre from "../components/ChampTitre";
 
 // Ordre d'affichage : celui de l'organigramme, puis les autres par ordre alphabétique.
 const rang = (identifiant: string) => {
@@ -17,6 +18,7 @@ const trier = (a: LigneUtilisateur, b: LigneUtilisateur) =>
 
 export type LigneUtilisateur = {
   id: string;
+  titre: string;
   prenom: string;
   nom: string;
   identifiant: string;
@@ -38,6 +40,7 @@ type Champs = {
   ministere: string;
   departement: string;
   leaderId: string;
+  titre: string;
   prenom: string;
   nom: string;
   identifiant: string;
@@ -48,6 +51,7 @@ const vide = (role: string, leaderId = ""): Champs => ({
   ministere: "",
   departement: "",
   leaderId,
+  titre: "",
   prenom: "",
   nom: "",
   identifiant: "",
@@ -58,13 +62,17 @@ const depuis = (u: LigneUtilisateur): Champs => ({
   ministere: u.ministere,
   departement: u.departement,
   leaderId: u.leaderId,
+  titre: u.titre,
   prenom: u.prenom,
   nom: u.nom,
   identifiant: u.identifiant,
   courriel: u.courriel,
 });
 
-const nomPersonne = (u: { prenom: string; nom: string }) => `${u.prenom} ${u.nom}`.trim();
+const nomPersonne = (u: { titre: string; prenom: string; nom: string }) => {
+  const n = `${u.prenom} ${u.nom}`.trim();
+  return n && u.titre ? `${u.titre} ${n}` : n;
+};
 const titreCompte = (u: LigneUtilisateur) =>
   u.role === "admin"
     ? `Ministère ${u.ministere}`
@@ -217,18 +225,19 @@ export default function Utilisateurs({
             </label>
           </div>
         )}
+        <ChampTitre valeur={c.titre} onChange={(v) => maj("titre", v)} />
         <div className="fin-grille2">
           <label className="fin-champ">
             <span>Prénom de la personne</span>
-            <input className="fin-input" value={c.prenom} onChange={(e) => maj("prenom", e.target.value)} placeholder="Ex. AP Cindy" />
+            <input className="fin-input" value={c.prenom} onChange={(e) => maj("prenom", e.target.value)} placeholder="Ex. John" />
           </label>
           <label className="fin-champ">
             <span>Nom de la personne</span>
-            <input className="fin-input" value={c.nom} onChange={(e) => maj("nom", e.target.value)} />
+            <input className="fin-input" value={c.nom} onChange={(e) => maj("nom", e.target.value)} placeholder="Ex. Doe" />
           </label>
         </div>
         <p style={{ fontSize: 12, color: "var(--fin-gris)", margin: "-6px 0 12px" }}>
-          Facultatif : laissés vides, la personne indique son nom à sa première connexion.
+          Facultatif : laissés vides, la personne indique son titre et son nom à sa première connexion.
         </p>
         <div className="fin-grille2">
           <label className="fin-champ">

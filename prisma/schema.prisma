@@ -23,6 +23,7 @@ datasource db {
 //   "utilisateur" (un département) | "admin" (un ministère) | "superadmin".
 model FinUtilisateur {
   id           String   @id @default(cuid())
+  titre        String? // GA, AP, PA, AE, AM, Responsable (affiché devant le nom)
   prenom       String
   nom          String
   identifiant  String?  @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules

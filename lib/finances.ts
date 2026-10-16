@@ -16,7 +16,14 @@ export const FIN = {
 } as const;
 
 // Premier compte super admin, proposé à l'installation (crée ensuite les autres).
-export const PREMIER_ADMIN = { prenom: "GA", nom: "Maïté", identifiant: "estherk" } as const;
+export const PREMIER_ADMIN = { titre: "GA", prenom: "Maïté", nom: "", identifiant: "estherk" } as const;
+
+// Titres possibles d'une personne (affichés devant son nom : « GA John Doe »).
+export const TITRES = ["GA", "AP", "PA", "AE", "AM", "Responsable"] as const;
+export function titreValide(t: unknown): string | null {
+  const v = String(t ?? "").trim();
+  return (TITRES as readonly string[]).includes(v) ? v : null;
+}
 
 // Courriel des comptes : identifiant@evhnb.ca
 export const DOMAINE_COURRIEL = "evhnb.ca";
@@ -111,10 +118,10 @@ export function parseMontant(saisie: unknown): number | null {
 // Nom affiché d'un compte : le nom de la personne (saisi à sa première
 // connexion ou par le super administrateur) ; à défaut, son département ou
 // son ministère.
-export type NomCompte = { prenom: string; nom: string; ministere?: string | null; departement?: string | null };
+export type NomCompte = { titre?: string | null; prenom: string; nom: string; ministere?: string | null; departement?: string | null };
 export function nomUtilisateur(u: NomCompte): string {
   const n = `${u.prenom} ${u.nom}`.trim();
-  if (n) return n;
+  if (n) return u.titre ? `${u.titre} ${n}` : n;
   if (u.departement) return `Département ${u.departement}`;
   if (u.ministere) return `Ministère ${u.ministere}`;
   return "(nom à compléter)";

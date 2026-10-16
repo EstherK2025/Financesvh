@@ -69,8 +69,9 @@ ministère. Le super administrateur peut :
   d'un ministère laisse ses départements « sans ministère » et envoie ses
   demandes en attente directement aux finances.
 
-Chaque compte représente un **ministère** ou un **département**. Le **nom de la
-personne responsable** est saisi par elle-même à sa **première connexion**
+Chaque compte représente un **ministère** ou un **département**. Le **titre**
+(GA, AP, PA, AE, AM ou Responsable) et le **nom de la personne responsable**
+(ex. « GA John Doe ») sont saisis par elle-même à sa **première connexion**
 (avec son nouveau mot de passe) ; tant qu'il manque, le compte s'affiche sous
 le nom du ministère ou du département.
 
