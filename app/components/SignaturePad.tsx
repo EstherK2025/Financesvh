@@ -122,10 +122,10 @@ export default function SignaturePad({ onChange }: { onChange: (dataUrl: string)
     <div>
       <div className="fin-segments" role="tablist" aria-label="Type de signature">
         <button type="button" role="tab" aria-selected={mode === "dessiner"} className={mode === "dessiner" ? "actif" : ""} onClick={() => changerMode("dessiner")}>
-          ✍️ Dessiner
+          Dessiner
         </button>
         <button type="button" role="tab" aria-selected={mode === "ecrire"} className={mode === "ecrire" ? "actif" : ""} onClick={() => changerMode("ecrire")}>
-          Aa Écrire mes initiales
+          Écrire mes initiales
         </button>
       </div>
       {mode === "ecrire" && (

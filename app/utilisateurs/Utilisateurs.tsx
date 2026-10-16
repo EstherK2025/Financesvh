@@ -127,6 +127,21 @@ export default function Utilisateurs({
     window.location.reload();
   }
 
+  // Nouveau responsable : on efface les informations de l'ancien.
+  async function reinitialiserCompte(u: LigneUtilisateur) {
+    if (
+      !confirm(
+        `Réinitialiser le compte « ${titreCompte(u)} » pour un nouveau responsable ?\n\nLe titre, le prénom, le nom, le mot de passe et l'Authenticator de ${nomPersonne(u) || "l'ancien responsable"} sont effacés, et l'identifiant d'origine du compte est rétabli. Le nouveau responsable se connectera avec cet identifiant et le mot de passe temporaire universel, puis saisira son propre nom (son identifiant deviendra prénom.nom).`,
+      )
+    )
+      return;
+    setErreur("");
+    const r = await appeler<{ identifiant?: string }>(`/api/utilisateurs/${u.id}`, { method: "PATCH", json: { reinitialiser: "compte" } });
+    if (!r.ok) return setErreur(r.erreur);
+    alert(`Compte réinitialisé.\n\nIdentifiant à donner au nouveau responsable : ${r.data.identifiant}\n(avec le mot de passe temporaire universel)`);
+    window.location.reload();
+  }
+
   async function supprimer(u: LigneUtilisateur) {
     if (!confirm(`Supprimer définitivement le compte « ${titreCompte(u)} »${nomPersonne(u) ? ` (${nomPersonne(u)})` : ""} ?`)) return;
     setErreur("");
@@ -302,7 +317,7 @@ export default function Utilisateurs({
             : u.active
               ? `Actif${u.derniereConnexion ? ` · vu le ${u.derniereConnexion}` : ""}`
               : "Première connexion à faire"}
-          {u.authenticator && <div title="Application Authenticator configurée">🔐 Authenticator</div>}
+          {u.authenticator && <div title="Application Authenticator configurée">Authenticator activé</div>}
         </td>
         <td>
           <div className="fin-actions" style={{ justifyContent: "flex-end" }}>
@@ -331,11 +346,16 @@ export default function Utilisateurs({
                 className="fin-btn blanc petit"
                 onClick={() =>
                   confirm(
-                    `Réinitialiser l'accès de « ${titreCompte(u)} » ?\n\nLe mot de passe et l'Authenticator sont effacés : à la prochaine connexion, il faudra l'identifiant actuel (${u.identifiant}) et le mot de passe temporaire universel, puis le nom et un nouveau mot de passe.${u.id === moiId ? "\n\nATTENTION : c'est votre propre compte, vous serez déconnecté(e)." : ""}`,
-                  ) && modifier(u.id, { reinitialiserAcces: true })
+                    `Réinitialiser le mot de passe de « ${titreCompte(u)} » ?\n\nMême personne : son mot de passe et son Authenticator sont effacés. À la prochaine connexion, elle utilise son identifiant actuel (${u.identifiant}) et le mot de passe temporaire universel, puis choisit un nouveau mot de passe.${u.id === moiId ? "\n\nATTENTION : c'est votre propre compte, vous serez déconnecté(e)." : ""}`,
+                  ) && modifier(u.id, { reinitialiser: "mot_de_passe" })
                 }
               >
-                Réinitialiser l&apos;accès
+                Réinitialiser le mot de passe
+              </button>
+            )}
+            {u.id !== moiId && (u.active || u.prenom || u.nom) && (
+              <button className="fin-btn blanc petit" onClick={() => reinitialiserCompte(u)}>
+                Réinitialiser le compte
               </button>
             )}
             {u.id !== moiId && (

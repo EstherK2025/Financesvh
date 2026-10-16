@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CATEGORIES, MODES_PAIEMENT, PIECES, TYPES, TYPES_AIDE, type TypeDemande } from "@/lib/finances";
 import { appeler } from "./api";
+import Icone from "./Icone";
 
 export type ValeursDemande = {
   type: TypeDemande;
@@ -159,14 +160,14 @@ export default function DemandeForm({ demandeId, initial, piecesExistantes = [],
                   checked={!aSupprimer.includes(p.id)}
                   onChange={(e) => setASupprimer((a) => (e.target.checked ? a.filter((x) => x !== p.id) : [...a, p.id]))}
                 />
-                📎 {p.nom}
+                <Icone nom="trombone" taille={16} /> {p.nom}
               </label>
             </li>
           ))}
           {fichiers.map((f, i) => (
             <li key={i}>
               <label>
-                📎 {f.name} <span style={{ color: "var(--fin-gris)" }}>({tailleLisible(f.size)})</span>
+                <Icone nom="trombone" taille={16} /> {f.name} <span style={{ color: "var(--fin-gris)" }}>({tailleLisible(f.size)})</span>
                 <button type="button" className="fin-btn blanc petit" onClick={() => setFichiers((a) => a.filter((_, j) => j !== i))}>
                   Retirer
                 </button>
@@ -175,7 +176,7 @@ export default function DemandeForm({ demandeId, initial, piecesExistantes = [],
           ))}
         </ul>
         <label className="fin-btn blanc" style={{ cursor: "pointer" }}>
-          📷 Ajouter un fichier
+          <Icone nom="trombone" taille={17} /> Ajouter une facture ou un fichier
           <input type="file" accept="application/pdf,image/*" multiple onChange={ajouter} style={{ display: "none" }} />
         </label>
       </div>

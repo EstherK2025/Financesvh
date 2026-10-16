@@ -13,15 +13,26 @@ export async function POST(req: Request) {
   const u = await comptePremiere();
   if (!u) return NextResponse.json({ error: "Session expirée. Reconnectez-vous avec le mot de passe temporaire." }, { status: 401 });
   const b = await req.json().catch(() => ({}));
-  const prenom = String(b.prenom ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
-  const nom = String(b.nom ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
-  if (!prenom || !nom) return NextResponse.json({ error: "Indiquez votre prénom et votre nom." }, { status: 400 });
   const mdp = String(b.motDePasse || "");
   const pb = problemeMotDePasse(mdp);
   if (pb) return NextResponse.json({ error: pb }, { status: 400 });
   if (egalConstant(mdp, await mdpTemporaire()))
     return NextResponse.json({ error: "Choisissez un mot de passe différent du mot de passe temporaire." }, { status: 400 });
 
+  // Mot de passe seulement réinitialisé : même personne, même identifiant.
+  if (u.nomConfirme) {
+    const maj = await prisma.finUtilisateur.update({
+      where: { id: u.id },
+      data: { motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
+    });
+    await fermerPremiere();
+    return NextResponse.json(await suiteApresMotDePasse(maj));
+  }
+
+  // Vraie première connexion (ou compte réinitialisé pour un nouveau responsable).
+  const prenom = String(b.prenom ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+  const nom = String(b.nom ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+  if (!prenom || !nom) return NextResponse.json({ error: "Indiquez votre prénom et votre nom." }, { status: 400 });
   // Identifiant « prenom.nom », rendu unique (john.doe, john.doe2…).
   const base = identifiantDepuisNom(prenom, nom);
   if (problemeIdentifiant(base)) return NextResponse.json({ error: "Prénom et nom trop courts pour créer l'identifiant." }, { status: 400 });
@@ -40,7 +51,7 @@ export async function POST(req: Request) {
 
   const maj = await prisma.finUtilisateur.update({
     where: { id: u.id },
-    data: { identifiant, courriel, titre: await titreValide(b.titre), prenom, nom, motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
+    data: { nomConfirme: true, identifiant, courriel, titre: await titreValide(b.titre), prenom, nom, motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
   });
   await fermerPremiere();
   return NextResponse.json({ ...(await suiteApresMotDePasse(maj)), identifiant });

@@ -8,7 +8,7 @@ const FROM = process.env.EMAIL_FROM || "Finances VH <events@evhnb.ca>";
 
 export async function envoyer(to: string, subject: string, html: string) {
   if (!resend) {
-    console.log(`📧 [SIMULATION EMAIL] À : ${to} · Objet : ${subject}`);
+    console.log(`[SIMULATION EMAIL] À : ${to} · Objet : ${subject}`);
     return { simulated: true };
   }
   // Resend ne lève pas d'exception sur un refus : il renvoie { error }.

@@ -117,8 +117,14 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
   `john.de-la-tour` ; `john.doe2` si déjà pris). Il s'affiche à l'écran ; les
   accents tapés à la connexion sont ignorés. Le courriel par défaut suit
   (`marie-eve.cote@evhnb.ca`).
-- **Réinitialiser l'accès** (Utilisateurs) : efface le mot de passe et
-  l'Authenticator ; le compte repart en première connexion.
+- **Réinitialiser le mot de passe** (Utilisateurs) — même personne : mot de
+  passe et Authenticator effacés ; à la prochaine connexion (identifiant actuel
+  + mot de passe temporaire), elle choisit seulement un nouveau mot de passe.
+- **Réinitialiser le compte** (Utilisateurs) — nouveau responsable : titre,
+  nom, mot de passe et Authenticator de l'ancien responsable effacés,
+  identifiant d'origine rétabli (ex. `min-cultes`, affiché après la
+  réinitialisation) ; le nouveau responsable refait une vraie première
+  connexion (son nom → identifiant `prenom.nom`).
 - **Supprimer toutes les demandes** (Réglages → zone sensible, confirmation
   « SUPPRIMER ») : remise à zéro des demandes, factures et historiques.
 - Le mot de passe temporaire universel est **affiché au super administrateur**
