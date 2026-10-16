@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { problemeMotDePasse } from "@/lib/finances";
 import { appeler } from "../../components/api";
+import ChampMotDePasse from "../../components/ChampMotDePasse";
 
 export default function ActiverForm({ jeton, demanderCourriel = false }: { jeton: string; demanderCourriel?: boolean }) {
   const [courriel, setCourriel] = useState("");
@@ -57,12 +58,12 @@ export function ChampsMotDePasse(p: { mdp: string; setMdp: (v: string) => void; 
     <>
       <label className="fin-champ">
         <span>{p.libelle || "Mot de passe"}</span>
-        <input className="fin-input" type="password" autoComplete="new-password" required value={p.mdp} onChange={(e) => p.setMdp(e.target.value)} />
+        <ChampMotDePasse autoComplete="new-password" required value={p.mdp} onChange={(e) => p.setMdp(e.target.value)} />
         <em>10 caractères minimum, avec une majuscule, une minuscule et un chiffre.</em>
       </label>
       <label className="fin-champ">
         <span>Confirmer</span>
-        <input className="fin-input" type="password" autoComplete="new-password" required value={p.mdp2} onChange={(e) => p.setMdp2(e.target.value)} />
+        <ChampMotDePasse autoComplete="new-password" required value={p.mdp2} onChange={(e) => p.setMdp2(e.target.value)} />
       </label>
     </>
   );

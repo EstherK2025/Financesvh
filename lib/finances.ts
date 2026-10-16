@@ -51,6 +51,7 @@ export const CATEGORIES = [
   "Repas",
   "Livres",
   "Produits de nettoyage",
+  "Achat ponctuel",
 ] as const;
 
 export const TYPES = {

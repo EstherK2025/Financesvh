@@ -131,7 +131,7 @@ export default function Utilisateurs({
   async function reinitialiserCompte(u: LigneUtilisateur) {
     if (
       !confirm(
-        `Réinitialiser le compte « ${titreCompte(u)} » pour un nouveau responsable ?\n\nLe titre, le prénom, le nom, le mot de passe et l'Authenticator de ${nomPersonne(u) || "l'ancien responsable"} sont effacés, et l'identifiant d'origine du compte est rétabli. Le nouveau responsable se connectera avec cet identifiant et le mot de passe temporaire universel, puis saisira son propre nom (son identifiant deviendra prénom.nom).`,
+        `Réinitialiser le compte « ${titreCompte(u)} » pour un nouveau responsable ?\n\nLe titre, le prénom, le nom, le mot de passe et l'Authenticator de ${nomPersonne(u) || "l'ancien responsable"} sont effacés, et l'identifiant d'origine du compte est rétabli. Le nouveau responsable se connectera avec cet identifiant et le mot de passe temporaire universel, puis saisira son propre nom (son identifiant deviendra prenom.nom, sans accents).`,
       )
     )
       return;

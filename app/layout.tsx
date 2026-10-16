@@ -5,6 +5,8 @@ import { FIN, nomUtilisateur } from "@/lib/finances";
 import { utilisateurCourant } from "@/lib/fin-auth";
 import FinNav from "./components/FinNav";
 import Transition from "./components/Transition";
+import TutorielBienvenue from "./components/TutorielBienvenue";
+import { etapesTutoriel } from "@/lib/tutoriel";
 
 // Polices (comme Rapports VH) : Montserrat pour les titres, Manrope pour le
 // texte ; Great Vibes pour les signatures écrites (initiales en écriture manuscrite).
@@ -41,6 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <img src={FIN.logoComplet} alt="Vases d'Honneur" className="fin-footer-logo" />
             {FIN.organisation} · {FIN.nom} · Accès réservé
           </footer>
+          {moi && !moi.tutorielVu && <TutorielBienvenue etapes={etapesTutoriel(moi.role)} />}
         </div>
       </body>
     </html>

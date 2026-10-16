@@ -6,6 +6,7 @@ import { identifiantDepuisNom, problemeMotDePasse } from "@/lib/finances";
 import { appeler } from "../components/api";
 import ChampTitre from "../components/ChampTitre";
 import { ChampsMotDePasse } from "../activer/[jeton]/ActiverForm";
+import ChampMotDePasse from "../components/ChampMotDePasse";
 
 type Etape = "mdp" | "premiere" | "enrolement" | "code" | "identifiant";
 type Suite = { etape: "connecte" | "premiere" | "enrolement" | "code"; identifiant?: string; compte?: string; titre?: string; titres?: string[]; nomConfirme?: boolean; prenom?: string; nom?: string };
@@ -146,7 +147,7 @@ export default function ConnexionForm() {
       <form className="fin-carte" onSubmit={creerMotDePasse}>
         <div className="fin-note">
           Bienvenue ! C&apos;est la <b>première connexion</b> du compte <b>{compte}</b>. Indiquez votre nom (responsable de ce
-          compte) et créez votre propre mot de passe. Votre identifiant deviendra automatiquement <b>prénom.nom</b>. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
+          compte) et créez votre propre mot de passe. Votre identifiant deviendra automatiquement <b>prenom.nom</b> (sans accents). Le mot de passe temporaire ne fonctionnera plus pour ce compte.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
         <ChampTitre valeur={titre} onChange={setTitre} titres={listeTitres} />
@@ -269,7 +270,7 @@ export default function ConnexionForm() {
       </label>
       <label className="fin-champ">
         <span>Mot de passe</span>
-        <input className="fin-input" type="password" autoComplete="current-password" required value={mdp} onChange={(e) => setMdp(e.target.value)} />
+        <ChampMotDePasse autoComplete="current-password" required value={mdp} onChange={(e) => setMdp(e.target.value)} />
       </label>
       <button className="fin-btn plein" disabled={charge}>
         {charge ? "…" : "Continuer"}

@@ -77,6 +77,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         prenom: "",
         nom: "",
         nomConfirme: false,
+        tutorielVu: false,
         identifiant: identifiantRetabli,
         // Courriel par défaut de l'ancien responsable → celui du compte.
         ...(u.courriel === courrielParDefaut(u.identifiant || "") || !u.courriel ? { courriel: pris && pris.id !== id ? null : courrielBase } : {}),

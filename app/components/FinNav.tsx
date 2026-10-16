@@ -105,6 +105,9 @@ export default function FinNav({ utilisateur }: Props) {
                 {utilisateur.nom}
                 <small>{ROLES[utilisateur.role]}</small>
               </span>
+              <Link href="/guide" className={`fin-icone-btn fin-guide-btn${path === "/guide" ? " actif" : ""}`} title="Guide" aria-label="Guide : revoir le tutoriel">
+                <Icone nom="aide" taille={19} />
+              </Link>
               <button className="fin-icone-btn" onClick={sortir} title="Se déconnecter" aria-label="Se déconnecter">
                 <Icone nom="sortie" taille={19} />
               </button>

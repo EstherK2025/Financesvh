@@ -50,6 +50,7 @@ model FinUtilisateur {
   echecs       Int      @default(0)
   verrouJusqua DateTime?
   derniereConnexion DateTime?
+  tutorielVu   Boolean   @default(false) // tutoriel de bienvenue déjà vu (revoir : page Guide)
   // Double authentification par application Authenticator (TOTP).
   totpSecret   String? // clé partagée (base32), créée au premier enrôlement
   totpActif    Boolean  @default(false) // QR code scanné et premier code validé
