@@ -26,3 +26,16 @@ export async function changerMdpTemporaire(valeur: string) {
 export async function logo() {
   return prisma.finReglage.findUnique({ where: { cle: "logo" } });
 }
+
+// Double authentification (code par courriel) : DÉSACTIVÉE par défaut, tant que
+// les courriels (Resend + boîtes @evhnb.ca) ne sont pas prêts. Le super
+// administrateur l'active dans Réglages.
+export async function doubleAuthActive(): Promise<boolean> {
+  const r = await prisma.finReglage.findUnique({ where: { cle: "double_auth" } });
+  return r?.texte === "oui";
+}
+
+export async function changerDoubleAuth(active: boolean) {
+  const texte = active ? "oui" : "non";
+  await prisma.finReglage.upsert({ where: { cle: "double_auth" }, create: { cle: "double_auth", texte }, update: { texte } });
+}

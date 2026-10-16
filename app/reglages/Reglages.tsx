@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { appeler } from "../components/api";
 
-export default function Reglages({ mdp, aUnLogo, version }: { mdp: string; aUnLogo: boolean; version: number }) {
+type Props = { mdp: string; aUnLogo: boolean; version: number; deuxFacteurs: boolean; resend: boolean };
+
+export default function Reglages({ mdp, aUnLogo, version, deuxFacteurs, resend }: Props) {
   const [valeur, setValeur] = useState(mdp);
   const [erreur, setErreur] = useState("");
   const [ok, setOk] = useState("");
@@ -18,6 +20,15 @@ export default function Reglages({ mdp, aUnLogo, version }: { mdp: string; aUnLo
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
     setOk("Mot de passe temporaire modifié.");
+  }
+
+  async function basculerDoubleAuth() {
+    const activer = !deuxFacteurs;
+    if (activer && !confirm("Activer la double authentification ? Chaque connexion demandera un code envoyé au courriel du compte : vérifiez d'abord que les courriels arrivent bien.")) return;
+    setErreur("");
+    const r = await appeler("/api/reglages", { json: { doubleAuth: activer } });
+    if (!r.ok) return setErreur(r.erreur);
+    window.location.reload();
   }
 
   async function envoyerLogo(e: React.ChangeEvent<HTMLInputElement>) {
@@ -44,11 +55,33 @@ export default function Reglages({ mdp, aUnLogo, version }: { mdp: string; aUnLo
       {erreur && <div className="fin-erreur">{erreur}</div>}
       {ok && <div className="fin-succes">{ok}</div>}
 
+      <div className="fin-carte">
+        <h2 style={{ marginTop: 0 }}>Double authentification</h2>
+        <p style={{ fontSize: 14, marginBottom: 12 }}>
+          {deuxFacteurs ? (
+            <>
+              <b>Activée</b> : après le mot de passe, chaque personne reçoit un code à 6 chiffres sur le courriel de son compte.
+            </>
+          ) : (
+            <>
+              <b>Désactivée</b> : l&apos;identifiant et le mot de passe suffisent. À activer quand les courriels (@evhnb.ca) et
+              Resend seront prêts.
+            </>
+          )}
+        </p>
+        {!resend && !deuxFacteurs && (
+          <div className="fin-note">Resend n&apos;est pas encore configuré (RESEND_API_KEY) : les codes ne pourraient pas être envoyés.</div>
+        )}
+        <button className={`fin-btn ${deuxFacteurs ? "non" : ""}`} onClick={basculerDoubleAuth} disabled={!deuxFacteurs && !resend}>
+          {deuxFacteurs ? "Désactiver la double authentification" : "Activer la double authentification"}
+        </button>
+      </div>
+
       <form className="fin-carte" onSubmit={enregistrerMdp}>
         <h2 style={{ marginTop: 0 }}>Mot de passe temporaire universel</h2>
         <p style={{ fontSize: 14, marginBottom: 12 }}>
           À donner aux personnes pour leur <b>première connexion</b> (identifiant + ce mot de passe). Elles créent ensuite leur
-          propre mot de passe, puis reçoivent un code par courriel. Il ne fonctionne plus pour un compte dont le mot de passe a été
+          propre mot de passe (et reçoivent un code par courriel si la double authentification est activée). Il ne fonctionne plus pour un compte dont le mot de passe a été
           choisi.
         </p>
         <div className="fin-mdp-temp">{mdp}</div>

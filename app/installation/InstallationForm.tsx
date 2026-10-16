@@ -24,8 +24,8 @@ export default function InstallationForm() {
   if (lien)
     return (
       <div className="fin-carte">
-        <div className="fin-succes">Compte créé. Un courriel d&apos;activation a été envoyé.</div>
-        <p style={{ fontSize: 13, marginBottom: 12 }}>Vous pouvez aussi activer le compte directement :</p>
+        <div className="fin-succes">Compte créé.</div>
+        <p style={{ fontSize: 13, marginBottom: 12 }}>Choisissez maintenant votre mot de passe :</p>
         <a href={lien} className="fin-btn plein">
           Choisir le mot de passe
         </a>
@@ -55,8 +55,15 @@ export default function InstallationForm() {
         <input className="fin-input" autoCapitalize="none" autoCorrect="off" required value={f.identifiant} onChange={maj("identifiant")} />
       </label>
       <label className="fin-champ">
-        <span>Courriel (reçoit le code de connexion)</span>
-        <input className="fin-input" type="email" required value={f.courriel} onChange={maj("courriel")} />
+        <span>Courriel</span>
+        <input
+          className="fin-input"
+          type="email"
+          placeholder={`${f.identifiant || "identifiant"}@evhnb.ca`}
+          value={f.courriel}
+          onChange={maj("courriel")}
+        />
+        <em>Facultatif — laisser vide : {f.identifiant || "identifiant"}@evhnb.ca.</em>
       </label>
       <button className="fin-btn plein" disabled={charge}>
         {charge ? "…" : "Créer le super admin"}

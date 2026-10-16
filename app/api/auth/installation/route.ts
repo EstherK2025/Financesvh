@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creerJetonCompte, motDePasseInstallationValide } from "@/lib/fin-auth";
 import { courrielInvitation, lienFinances } from "@/lib/fin-email";
-import { normaliserIdentifiant, problemeIdentifiant, nomUtilisateur } from "@/lib/finances";
+import { courrielParDefaut, normaliserIdentifiant, problemeIdentifiant, nomUtilisateur } from "@/lib/finances";
 
 // Création du tout premier super admin (possible uniquement quand aucun compte
 // n'existe encore). Protégée par le mot de passe d'installation.
@@ -15,10 +15,11 @@ export async function POST(req: Request) {
 
   const prenom = String(b.prenom || "").trim().slice(0, 80);
   const nom = String(b.nom || "").trim().slice(0, 80);
-  const courriel = String(b.courriel || "").trim().toLowerCase().slice(0, 160);
+  const identifiantSaisi = normaliserIdentifiant(b.identifiant);
+  const courriel = String(b.courriel || "").trim().toLowerCase().slice(0, 160) || courrielParDefaut(identifiantSaisi);
   const identifiant = normaliserIdentifiant(b.identifiant);
   if (!prenom || !nom || !courriel.includes("@"))
-    return NextResponse.json({ error: "Prénom, nom et courriel requis." }, { status: 400 });
+    return NextResponse.json({ error: "Prénom et nom requis." }, { status: 400 });
   const pb = problemeIdentifiant(identifiant);
   if (pb) return NextResponse.json({ error: pb }, { status: 400 });
 

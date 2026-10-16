@@ -37,8 +37,7 @@ export default async function UtilisateursPage() {
         🔑 <b>Mot de passe temporaire universel</b> (première connexion) :{" "}
         <code style={{ fontSize: 16, fontWeight: 800, userSelect: "all" }}>{await mdpTemporaire()}</code>
         <br />
-        Chaque personne se connecte avec son <b>identifiant</b> et ce mot de passe, crée son propre mot de passe, puis reçoit un
-        code sur son courriel. <Link href="/reglages">Modifier</Link>
+        Chaque personne se connecte avec son <b>identifiant</b> et ce mot de passe, puis crée son propre mot de passe. <Link href="/reglages">Modifier</Link>
       </div>
       <Utilisateurs
         lignes={lignes}

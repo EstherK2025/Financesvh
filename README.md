@@ -78,8 +78,8 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
 - Connexion par **identifiant** (ex. `estherk`, `tribus`) ou courriel.
 - **Première connexion** : identifiant + **mot de passe temporaire universel**
   → la personne **crée son propre mot de passe** (10 caractères min.,
-  majuscule, minuscule, chiffre) → elle reçoit un **code par courriel** → elle
-  est connectée. Le mot de passe temporaire ne fonctionne plus ensuite pour ce
+  majuscule, minuscule, chiffre) → elle est connectée (après un **code par
+  courriel** si la double authentification est activée). Le mot de passe temporaire ne fonctionne plus ensuite pour ce
   compte (ni pour un compte déjà activé).
 - Le mot de passe temporaire universel est **affiché au super administrateur**
   (Utilisateurs et Réglages) et modifiable dans **Réglages**. Il est généré au
@@ -88,8 +88,9 @@ courriel. Identifiants : voir `lib/organigramme.ts` (ex. `tribus`, `louange`,
   sauf si un autre est saisi. Ces boîtes doivent exister : elles reçoivent les
   codes de connexion.
 - Autre possibilité : bouton « Lien d'activation » (lien personnel à envoyer).
-- **Double authentification** : mot de passe, puis **code à 6 chiffres reçu par
-  courriel** (10 min, 5 essais). Verrouillage 15 min après 5 mots de passe
+- **Double authentification** (code à 6 chiffres reçu par courriel, 10 min,
+  5 essais) : **désactivée par défaut**, le super administrateur l'active dans
+  **Réglages** quand Resend et les boîtes `@evhnb.ca` sont prêts. Verrouillage 15 min après 5 mots de passe
   erronés. « Mot de passe oublié » par lien courriel.
 - Factures stockées en base, visibles uniquement par le demandeur, son
   approbateur et les finances. Pages non indexées par les moteurs de recherche.

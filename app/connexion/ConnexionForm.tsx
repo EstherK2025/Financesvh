@@ -34,6 +34,10 @@ export default function ConnexionForm() {
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
     setMdp("");
+    if (r.data.etape === "connecte") {
+      window.location.href = "/";
+      return;
+    }
     if (r.data.etape === "premiere") {
       setPrenom(r.data.prenom || "");
       setBesoinCourriel(Boolean(r.data.besoinCourriel));
@@ -49,12 +53,16 @@ export default function ConnexionForm() {
     if (pb) return setErreur(pb);
     setCharge(true);
     setErreur("");
-    const r = await appeler<{ courriel: string }>("/api/auth/premiere", { json: { motDePasse: nouveau, courriel } });
+    const r = await appeler<{ etape: string; courriel?: string }>("/api/auth/premiere", { json: { motDePasse: nouveau, courriel } });
     setCharge(false);
     if (!r.ok) return setErreur(r.erreur);
+    if (r.data.etape === "connecte") {
+      window.location.href = "/";
+      return;
+    }
     setNouveau("");
     setNouveau2("");
-    setMasque(r.data.courriel);
+    setMasque(r.data.courriel || "");
     setEtape("code");
   }
 
@@ -99,7 +107,7 @@ export default function ConnexionForm() {
         )}
         <ChampsMotDePasse mdp={nouveau} setMdp={setNouveau} mdp2={nouveau2} setMdp2={setNouveau2} libelle="Nouveau mot de passe" />
         <button className="fin-btn plein" disabled={charge}>
-          {charge ? "…" : "Enregistrer et recevoir mon code"}
+          {charge ? "…" : "Enregistrer mon mot de passe"}
         </button>
       </form>
     );

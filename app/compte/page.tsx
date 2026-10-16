@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ROLES, libelleOrg, nomUtilisateur } from "@/lib/finances";
 import { exigerUtilisateur } from "../components/garde";
+import { doubleAuthActive } from "@/lib/fin-reglages";
 import MotDePasseForm from "./MotDePasseForm";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export default async function ComptePage() {
             </>
           )}
           <dt>Connexion</dt>
-          <dd>Mot de passe + code par courriel</dd>
+          <dd>{(await doubleAuthActive()) ? "Mot de passe + code par courriel" : "Identifiant + mot de passe"}</dd>
         </dl>
       </div>
       <h2>Changer mon mot de passe</h2>
