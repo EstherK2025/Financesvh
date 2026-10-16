@@ -32,7 +32,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     // Garde : la demande doit toujours être « à réviser » (pas de double envoi).
     const r = await tx.finDemande.updateMany({
       where: { id, statut: "a_reviser", demandeurId: moi.id },
-      data: { ...c.champs, statut: statutInitial(approbateurId), approbateurId, motifRefus: null },
+      data: { ...c.champs, statut: statutInitial(approbateurId), approbateurId, motifRefus: null, ministere: moi.ministere, departement: moi.departement },
     });
     if (r.count === 0) return false;
     if (aSupprimer.length) await tx.finPiece.deleteMany({ where: { id: { in: aSupprimer }, demandeId: id } });

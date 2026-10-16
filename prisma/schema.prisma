@@ -19,16 +19,24 @@ datasource db {
 // Modèles préfixés « Fin » pour cohabiter avec les autres sites.
 // ───────────────────────────────────────────────────────────
 
-// Compte utilisateur. 3 niveaux : "utilisateur" | "leader" | "superadmin".
+// Compte utilisateur. 3 niveaux (comme Rapports VH) :
+//   "utilisateur" (un département) | "admin" (un ministère) | "superadmin".
+// + « delegue » : UN compte partagé d'approbateur externe (identifiant et mot
+//   de passe fixes) ; à chaque décision, la personne saisit son nom, sa
+//   fonction, sa signature et la justification.
 model FinUtilisateur {
   id           String   @id @default(cuid())
+  titre        String? // GA, AP, PA, AE, AM, Responsable (affiché devant le nom)
   prenom       String
   nom          String
-  courriel     String   @unique // en minuscules
-  role         String   @default("utilisateur") // "utilisateur" | "leader" | "superadmin"
+  identifiant  String?  @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules
+  courriel     String?  @unique // en minuscules — reçoit le code de connexion ; peut être saisi par la personne à l'activation
+  role         String   @default("utilisateur") // "utilisateur" | "admin" | "superadmin"
+  ministere    String? // ministère du compte (admin : le sien ; utilisateur : celui de son administrateur)
+  departement  String? // département (comptes utilisateur)
   actif        Boolean  @default(true)
   motDePasse   String? // hash scrypt "sel:hash" ; null tant que le compte n'est pas activé
-  // Leader qui approuve en premier les demandes de cette personne.
+  // Administrateur du ministère qui approuve en premier les demandes de cette personne.
   leaderId     String?
   leader       FinUtilisateur?  @relation("FinLeader", fields: [leaderId], references: [id], onDelete: SetNull)
   equipe       FinUtilisateur[] @relation("FinLeader")
@@ -39,11 +47,14 @@ model FinUtilisateur {
   echecs       Int      @default(0)
   verrouJusqua DateTime?
   derniereConnexion DateTime?
+  // Double authentification par application Authenticator (TOTP).
+  totpSecret   String? // clé partagée (base32), créée au premier enrôlement
+  totpActif    Boolean  @default(false) // QR code scanné et premier code validé
+  totpDernier  Int? // dernier pas de temps accepté (un code ne sert qu'une fois)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   sessions     FinSession[]
-  codes        FinCode[]
   demandes     FinDemande[]    @relation("FinDemandeur")
   aApprouver   FinDemande[]    @relation("FinApprobateur")
   historique   FinHistorique[]
@@ -57,20 +68,6 @@ model FinSession {
   utilisateurId String
   utilisateur   FinUtilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
   expire        DateTime
-  createdAt     DateTime       @default(now())
-
-  @@index([utilisateurId])
-}
-
-// Code de vérification à 6 chiffres envoyé par courriel (2ᵉ facteur).
-model FinCode {
-  id            String         @id @default(cuid())
-  utilisateurId String
-  utilisateur   FinUtilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-  codeHash      String
-  expire        DateTime
-  tentatives    Int            @default(0)
-  utilise       Boolean        @default(false)
   createdAt     DateTime       @default(now())
 
   @@index([utilisateurId])
@@ -91,6 +88,8 @@ model FinDemande {
   dateDepense    DateTime?
   beneficiaire   String? // à qui verser l'argent (si différent du demandeur)
   modePaiement   String         @default("interac") // "interac" | "cheque" | "virement" | "comptant"
+  ministere      String? // ministère et département du demandeur au moment de la demande
+  departement    String?
   statut         String         @default("attente_leader")
   demandeurId    String
   demandeur      FinUtilisateur @relation("FinDemandeur", fields: [demandeurId], references: [id])
@@ -110,6 +109,7 @@ model FinDemande {
   @@index([demandeurId])
   @@index([approbateurId])
   @@index([statut])
+  @@index([ministere])
 }
 
 // Pièce jointe (facture, reçu, devis) stockée en base.
@@ -133,9 +133,26 @@ model FinHistorique {
   demande   FinDemande     @relation(fields: [demandeId], references: [id], onDelete: Cascade)
   auteurId  String?
   auteur    FinUtilisateur? @relation(fields: [auteurId], references: [id], onDelete: SetNull)
-  action    String // "soumise" | "approuvee_leader" | "approuvee_finances" | "refusee" | "resoumise" | "annulee" | "payee"
+  action    String // "soumise" | "approuvee_leader" | "approuvee_finances" | "refusee" | "resoumise" | "annulee" | "payee" | "attribuee"
   commentaire String?
+  // Signature à l'approbation (image PNG en data URL) et identité du signataire
+  // (pour l'approbateur externe : nom, fonction et justification saisis).
+  signature          String?
+  signataireNom      String?
+  signataireFonction String?
+  justification      String?
   createdAt DateTime       @default(now())
 
   @@index([demandeId])
+}
+
+// Réglages de la plateforme modifiables par le super administrateur
+// (clé « mdp_temporaire » : mot de passe universel de première connexion ;
+//  clé « logo » : logo Vases d'Honneur téléversé).
+model FinReglage {
+  cle       String   @id
+  texte     String?
+  donnees   Bytes?
+  typeMime  String?
+  updatedAt DateTime @updatedAt
 }

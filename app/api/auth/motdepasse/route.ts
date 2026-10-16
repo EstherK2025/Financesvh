@@ -7,6 +7,8 @@ import { problemeMotDePasse } from "@/lib/finances";
 export async function POST(req: Request) {
   const moi = await utilisateurCourant();
   if (!moi) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  if (moi.role === "delegue")
+    return NextResponse.json({ error: "Le mot de passe du compte partagé se change dans les Réglages (super administrateur)." }, { status: 403 });
   const b = await req.json().catch(() => ({}));
   const u = await prisma.finUtilisateur.findUnique({ where: { id: moi.id } });
   if (!u || !verifierMotDePasse(String(b.actuel || ""), u.motDePasse))

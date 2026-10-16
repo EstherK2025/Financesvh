@@ -12,14 +12,14 @@ export async function contexteFormulaire(moi: UtilisateurCourant) {
     });
     return {
       destinataires: autres.map((u) => ({ id: u.id, nom: nomUtilisateur(u) })),
-      circuit: "Choisissez qui approuve en premier ; la demande passe ensuite aux finances (un autre super admin que vous).",
+      circuit: "Choisissez qui approuve en premier ; la demande passe ensuite aux finances (un autre super administrateur que vous).",
     };
   }
   const leader = moi.leaderId ? await prisma.finUtilisateur.findUnique({ where: { id: moi.leaderId } }) : null;
   return {
     destinataires: undefined,
     circuit: leader?.actif
-      ? `Circuit : ${nomUtilisateur(leader)} (votre leader) approuve, puis les finances approuvent et paient. En cas de refus, la demande vous revient.`
-      : "Aucun leader ne vous est attribué : votre demande ira directement aux finances. En cas de refus, elle vous revient.",
+      ? `Circuit : ${nomUtilisateur(leader)}${leader.ministere ? ` (${leader.ministere})` : ""} approuve, puis les finances approuvent et paient. En cas de refus, la demande vous revient.`
+      : "Votre demande ira directement aux finances. En cas de refus, elle vous revient.",
   };
 }

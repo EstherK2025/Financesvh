@@ -4,7 +4,7 @@ import { Resend } from "resend";
 // le courriel est seulement affiché dans la console du serveur.
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
-const FROM = process.env.EMAIL_FROM || "Finances VH <noreply@eventsevhnb.ca>";
+const FROM = process.env.EMAIL_FROM || "Finances VH <events@evhnb.ca>";
 
 export async function envoyer(to: string, subject: string, html: string) {
   if (!resend) {

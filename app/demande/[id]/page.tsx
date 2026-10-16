@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ACTIONS_HISTO, MODES_PAIEMENT, TYPES, formatMontant, nomUtilisateur, reference, type TypeDemande } from "@/lib/finances";
+import { libelleAction, MODES_PAIEMENT, TYPES, formatMontant, libelleCompte, libelleOrg, nomUtilisateur, reference, type TypeDemande } from "@/lib/finances";
 import { actionsPossibles, peutVoir } from "@/lib/fin-demandes";
 import { exigerUtilisateur } from "../../components/garde";
 import { contexteFormulaire } from "../../components/circuit";
@@ -31,12 +31,22 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
     d.statut === "attente_leader" ? 1 : d.statut === "attente_finances" ? 2 : d.statut === "approuvee" ? 3 : d.statut === "payee" ? 4 : -1;
   const etapes = [
     { cle: "soumise", libelle: "Soumise" },
-    ...(d.approbateur ? [{ cle: "leader", libelle: `Leader : ${nomUtilisateur(d.approbateur)}` }] : []),
+    ...(d.approbateur ? [{ cle: "leader", libelle: `${d.approbateur.ministere || "1ʳᵉ approbation"} : ${nomUtilisateur(d.approbateur)}` }] : []),
     { cle: "finances", libelle: "Finances" },
     { cle: "payee", libelle: "Payée" },
   ];
 
   const ctx = peut.reviser ? await contexteFormulaire(moi) : null;
+  // Super administrateur : personnes à qui confier la 1re approbation (demande en attente de cette étape).
+  const attribuables =
+    moi.role === "superadmin" && d.statut === "attente_leader"
+      ? (
+          await prisma.finUtilisateur.findMany({
+            where: { actif: true, role: { in: ["admin", "superadmin", "delegue"] }, id: { notIn: [d.demandeurId, d.approbateurId || ""] } },
+            orderBy: [{ role: "asc" }, { ministere: "asc" }],
+          })
+        ).map((u) => ({ id: u.id, nom: `${nomUtilisateur(u)} — ${libelleCompte(u)}` }))
+      : null;
   const date = (x: Date | null) => (x ? x.toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" }) : "—");
 
   return (
@@ -45,6 +55,16 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
         <h1 style={{ marginBottom: 0 }}>{reference(d.numero)}</h1>
         <StatutTag statut={d.statut} />
       </div>
+      {moi.role === "superadmin" && (
+        <div className="fin-actions" style={{ margin: "8px 0 4px" }}>
+          <a href={`/api/demandes/${d.id}/pdf`} target="_blank" rel="noopener" className="fin-btn blanc petit">
+            🖨️ Imprimer (PDF)
+          </a>
+          <a href={`/api/demandes/${d.id}/pdf?telecharger=1`} className="fin-btn blanc petit">
+            ⬇️ Télécharger pour classer
+          </a>
+        </div>
+      )}
       <p className="sous" style={{ marginTop: 4 }}>
         {TYPES[d.type as TypeDemande]} · {d.categorie} · soumise le {date(d.createdAt)}
       </p>
@@ -84,6 +104,12 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
             )}
             <dt>Demandeur</dt>
             <dd>{nomUtilisateur(d.demandeur)}</dd>
+            {(d.ministere || d.departement) && (
+              <>
+                <dt>Ministère</dt>
+                <dd>{libelleOrg(d.ministere, d.departement)}</dd>
+              </>
+            )}
             <dt>1ʳᵉ approbation</dt>
             <dd>{d.approbateur ? nomUtilisateur(d.approbateur) : "Directement aux finances"}</dd>
             <dt>Date de dépense</dt>
@@ -122,17 +148,34 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
         </div>
 
         <div>
-          <Decision demandeId={d.id} statut={d.statut} peut={peut} />
+          <Decision
+            demandeId={d.id}
+            statut={d.statut}
+            peut={peut}
+            externe={moi.role === "delegue"}
+            attribution={
+              attribuables
+                ? { actuel: d.approbateur ? nomUtilisateur(d.approbateur) : "—", choix: attribuables }
+                : undefined
+            }
+          />
           <div className="fin-carte">
             <h2 style={{ marginTop: 0 }}>Historique</h2>
             <ol className="fin-etapes">
               {d.historique.map((h) => (
                 <li key={h.id} className={h.action === "refusee" ? "refus" : ""}>
-                  <b>{ACTIONS_HISTO[h.action] || h.action}</b>
+                  <b>{libelleAction(h)}</b>
                   <small>
-                    {h.auteur ? nomUtilisateur(h.auteur) : "—"} · {h.createdAt.toLocaleString("fr-CA", { dateStyle: "medium", timeStyle: "short" })}
+                    {h.signataireNom || (h.auteur ? nomUtilisateur(h.auteur) : "—")}
+                    {h.signataireFonction ? ` (${h.signataireFonction})` : ""} ·{" "}
+                    {h.createdAt.toLocaleString("fr-CA", { timeZone: "America/Moncton", dateStyle: "medium", timeStyle: "short" })}
                   </small>
                   {h.commentaire && <q>« {h.commentaire} »</q>}
+                  {h.justification && <q>Justification : « {h.justification} »</q>}
+                  {h.signature && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={h.signature} alt={`Signature de ${h.signataireNom || "l'approbateur"}`} className="fin-signature-img" />
+                  )}
                 </li>
               ))}
             </ol>

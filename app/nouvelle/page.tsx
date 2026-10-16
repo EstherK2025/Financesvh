@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { exigerUtilisateur } from "../components/garde";
 import { contexteFormulaire } from "../components/circuit";
 import DemandeForm from "../components/DemandeForm";
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NouvellePage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const moi = await exigerUtilisateur();
+  if (moi.role === "delegue") redirect("/");
   const { type } = await searchParams;
   const ctx = await contexteFormulaire(moi);
   return (

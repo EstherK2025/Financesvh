@@ -67,24 +67,9 @@ async function envoyerSur(to: string, sujet: string, html: string) {
   }
 }
 
-export async function courrielCode(to: string, prenom: string, code: string) {
-  if (!process.env.RESEND_API_KEY) console.log(`🔐 [SIMULATION] Code de connexion Finances pour ${to} : ${code}`);
-  // Le code de vérification doit, lui, signaler un échec d'envoi.
-  await envoyer(
-    to,
-    `${code} — votre code de connexion`,
-    gabarit(
-      "Code de vérification",
-      p(`Bonjour ${esc(prenom)},`) +
-        p("Voici votre code pour terminer la connexion à la plateforme des finances :") +
-        `<div style="font-size:34px; font-weight:bold; letter-spacing:8px; text-align:center; background:#f4f4f4; border-radius:10px; padding:16px; margin:16px 0;">${code}</div>` +
-        p("Il est valable 10 minutes. Si vous n'êtes pas à l'origine de cette connexion, changez votre mot de passe."),
-    ),
-  );
-}
-
-export async function courrielInvitation(to: string, prenom: string, jeton: string, reinitialisation = false) {
+export async function courrielInvitation(to: string | null, prenom: string, jeton: string, reinitialisation = false) {
   const url = lienFinances(`/activer/${jeton}`);
+  if (!to) return; // pas encore de courriel : le lien est transmis à la main
   if (!process.env.RESEND_API_KEY) console.log(`🔗 [SIMULATION] Lien ${reinitialisation ? "de réinitialisation" : "d'activation"} pour ${to} : ${url}`);
   await envoyerSur(
     to,
@@ -102,7 +87,8 @@ export async function courrielInvitation(to: string, prenom: string, jeton: stri
 }
 
 // À l'approbateur : une demande attend sa décision.
-export async function courrielAApprouver(to: string, prenom: string, d: DemandeCourriel) {
+export async function courrielAApprouver(to: string | null, prenom: string, d: DemandeCourriel) {
+  if (!to) return;
   await envoyerSur(
     to,
     `À approuver : ${reference(d.numero)} — ${formatMontant(d.montant)}`,
@@ -115,7 +101,8 @@ export async function courrielAApprouver(to: string, prenom: string, d: DemandeC
 }
 
 // Au demandeur : sa demande a avancé, a été refusée ou payée.
-export async function courrielSuivi(to: string, prenom: string, d: DemandeCourriel, message: string, motif?: string) {
+export async function courrielSuivi(to: string | null, prenom: string, d: DemandeCourriel, message: string, motif?: string) {
+  if (!to) return;
   await envoyerSur(
     to,
     `${reference(d.numero)} — ${STATUTS[d.statut as Statut] || d.statut}`,

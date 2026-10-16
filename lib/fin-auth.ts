@@ -1,22 +1,23 @@
 import { cookies } from "next/headers";
-import { createHash, createHmac, randomBytes, randomInt, scryptSync, timingSafeEqual } from "crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { prisma } from "./prisma";
 import type { Role } from "./finances";
 
 // ───────────────────────────────────────────────────────────
 // Authentification de la plateforme Finances :
-//   1) courriel + mot de passe (hash scrypt, verrouillage après 5 échecs)
-//   2) code à 6 chiffres envoyé par courriel (double authentification)
+//   1) identifiant (ou courriel) + mot de passe (hash scrypt, verrouillage après 5 échecs)
+//   2) si activée (Réglages) : code à 6 chiffres de l'application Authenticator
 //   → session nominative (cookie httpOnly, jeton aléatoire haché en base).
 // ───────────────────────────────────────────────────────────
 
 const COOKIE_SESSION = "fin_session";
 const COOKIE_2FA = "fin_2fa";
+const COOKIE_PREMIERE = "fin_premiere";
+const DUREE_PREMIERE_MS = 30 * 60 * 1000; // 30 min pour choisir son mot de passe
 const DUREE_SESSION_MS = 12 * 60 * 60 * 1000; // 12 h
-const DUREE_CODE_MS = 10 * 60 * 1000; // 10 min
+const DUREE_CODE_MS = 10 * 60 * 1000; // 10 min pour saisir le code Authenticator
 export const MAX_ECHECS = 5;
 export const DUREE_VERROU_MS = 15 * 60 * 1000; // 15 min
-const MAX_ESSAIS_CODE = 5;
 
 const cookieBase = {
   httpOnly: true,
@@ -53,56 +54,75 @@ export function verifierMotDePasse(mdp: string, stocke: string | null | undefine
   return attendu.length === calcule.length && timingSafeEqual(attendu, calcule);
 }
 
-// ── Étape 2 : code par courriel ──
 function signer(valeur: string) {
   return createHmac("sha256", secret()).update(valeur).digest("hex");
 }
 
-// Crée un code, pose le cookie « en attente de code » et renvoie le code en
-// clair (à envoyer par courriel par l'appelant).
-export async function creerCode(utilisateurId: string): Promise<string> {
-  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  // Un seul code valide à la fois.
-  await prisma.finCode.updateMany({ where: { utilisateurId, utilise: false }, data: { utilise: true } });
-  const c = await prisma.finCode.create({
-    data: { utilisateurId, codeHash: "", expire: new Date(Date.now() + DUREE_CODE_MS) },
-  });
-  await prisma.finCode.update({ where: { id: c.id }, data: { codeHash: sha256(c.id + ":" + code) } });
+// ── Étape 2 : code de l'application Authenticator ──
+// Après le mot de passe, ce cookie signé mémorise le compte pendant 10 min, le
+// temps de saisir le code (ou de scanner le QR code au premier passage).
+export async function ouvrirAttente2FA(utilisateurId: string) {
   const jar = await cookies();
-  jar.set(COOKIE_2FA, `${c.id}.${signer(c.id)}`, { ...cookieBase, maxAge: DUREE_CODE_MS / 1000 });
-  return code;
+  const expire = Date.now() + DUREE_CODE_MS;
+  const valeur = `${utilisateurId}.${expire}`;
+  jar.set(COOKIE_2FA, `${valeur}.${signer("2fa:" + valeur)}`, { ...cookieBase, maxAge: DUREE_CODE_MS / 1000 });
 }
 
-// Code en attente (cookie) → utilisateur concerné, ou null.
-export async function codeEnAttente() {
+export async function compteEnAttente2FA() {
   const jar = await cookies();
-  const brut = jar.get(COOKIE_2FA)?.value || "";
-  const [id, sig] = brut.split(".");
-  if (!id || !sig || sig !== signer(id)) return null;
-  const c = await prisma.finCode.findUnique({ where: { id }, include: { utilisateur: true } });
-  if (!c || c.utilise || c.expire < new Date() || c.tentatives >= MAX_ESSAIS_CODE) return null;
-  return c;
+  const [id, expire, sig] = (jar.get(COOKIE_2FA)?.value || "").split(".");
+  if (!id || !expire || !sig || sig !== signer(`2fa:${id}.${expire}`) || Number(expire) < Date.now()) return null;
+  const u = await prisma.finUtilisateur.findUnique({ where: { id } });
+  if (!u || !u.actif || !u.motDePasse) return null;
+  if (u.verrouJusqua && u.verrouJusqua > new Date()) return null;
+  return u;
 }
 
-export type ResultatCode = { ok: true; utilisateurId: string } | { ok: false; erreur: string };
-
-export async function verifierCode(saisi: string): Promise<ResultatCode> {
-  const c = await codeEnAttente();
-  if (!c) return { ok: false, erreur: "Code expiré. Reconnectez-vous pour en recevoir un nouveau." };
-  const valide = sha256(c.id + ":" + saisi.replace(/\D/g, "")) === c.codeHash;
-  if (!valide) {
-    const t = c.tentatives + 1;
-    await prisma.finCode.update({ where: { id: c.id }, data: { tentatives: t, utilise: t >= MAX_ESSAIS_CODE } });
-    const reste = MAX_ESSAIS_CODE - t;
-    return {
-      ok: false,
-      erreur: reste > 0 ? `Code incorrect (${reste} essai${reste > 1 ? "s" : ""} restant${reste > 1 ? "s" : ""}).` : "Trop d'essais. Reconnectez-vous.",
-    };
-  }
-  await prisma.finCode.update({ where: { id: c.id }, data: { utilise: true } });
+export async function fermerAttente2FA() {
   const jar = await cookies();
   jar.delete(COOKIE_2FA);
-  return { ok: true, utilisateurId: c.utilisateurId };
+}
+
+// Code erroné : compte dans les échecs (verrouillage 15 min après 5).
+export async function echecCode(u: { id: string; echecs: number }): Promise<string> {
+  const echecs = u.echecs + 1;
+  if (echecs >= MAX_ECHECS) {
+    await prisma.finUtilisateur.update({ where: { id: u.id }, data: { echecs: 0, verrouJusqua: new Date(Date.now() + DUREE_VERROU_MS) } });
+    await fermerAttente2FA();
+    return "Trop d'essais : compte verrouillé 15 minutes.";
+  }
+  await prisma.finUtilisateur.update({ where: { id: u.id }, data: { echecs } });
+  const reste = MAX_ECHECS - echecs;
+  return `Code incorrect (${reste} essai${reste > 1 ? "s" : ""} restant${reste > 1 ? "s" : ""}). Vérifiez l'heure de votre téléphone.`;
+}
+
+// ── Première connexion (mot de passe temporaire universel) ──
+// Après le mot de passe temporaire, la personne doit choisir son propre mot de
+// passe ; ce cookie signé mémorise le compte concerné pendant 30 min.
+export async function ouvrirPremiere(utilisateurId: string) {
+  const jar = await cookies();
+  const expire = Date.now() + DUREE_PREMIERE_MS;
+  const valeur = `${utilisateurId}.${expire}`;
+  jar.set(COOKIE_PREMIERE, `${valeur}.${signer("premiere:" + valeur)}`, { ...cookieBase, maxAge: DUREE_PREMIERE_MS / 1000 });
+}
+
+export async function comptePremiere() {
+  const jar = await cookies();
+  const [id, expire, sig] = (jar.get(COOKIE_PREMIERE)?.value || "").split(".");
+  if (!id || !expire || !sig || sig !== signer(`premiere:${id}.${expire}`) || Number(expire) < Date.now()) return null;
+  const u = await prisma.finUtilisateur.findUnique({ where: { id } });
+  return u && u.actif && !u.motDePasse ? u : null;
+}
+
+export async function fermerPremiere() {
+  const jar = await cookies();
+  jar.delete(COOKIE_PREMIERE);
+}
+
+export function egalConstant(a: string, b: string): boolean {
+  const x = Buffer.from(sha256(a));
+  const y = Buffer.from(sha256(b));
+  return timingSafeEqual(x, y);
 }
 
 // ── Sessions ──
@@ -130,11 +150,15 @@ export async function fermerSession() {
 
 export type UtilisateurCourant = {
   id: string;
+  titre: string | null;
   prenom: string;
   nom: string;
-  courriel: string;
+  identifiant: string | null;
+  courriel: string | null;
   role: Role;
   leaderId: string | null;
+  ministere: string | null;
+  departement: string | null;
 };
 
 export async function utilisateurCourant(): Promise<UtilisateurCourant | null> {
@@ -144,7 +168,7 @@ export async function utilisateurCourant(): Promise<UtilisateurCourant | null> {
   const s = await prisma.finSession.findUnique({ where: { jetonHash: sha256(jeton) }, include: { utilisateur: true } });
   if (!s || s.expire < new Date() || !s.utilisateur.actif) return null;
   const u = s.utilisateur;
-  return { id: u.id, prenom: u.prenom, nom: u.nom, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId };
+  return { id: u.id, titre: u.titre, prenom: u.prenom, nom: u.nom, identifiant: u.identifiant, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId, ministere: u.ministere, departement: u.departement };
 }
 
 // Fermer toutes les sessions d'un compte (désactivation, nouveau mot de passe).
@@ -178,4 +202,12 @@ export function motDePasseInstallationValide(saisi: string): boolean {
   const a = Buffer.from(sha256(saisi));
   const b = Buffer.from(sha256(attendu));
   return timingSafeEqual(a, b);
+}
+
+// Retrouve un compte à partir de ce que la personne a saisi : identifiant
+// (ex. « estherk ») ou adresse courriel.
+export async function trouverCompte(saisie: unknown) {
+  const v = String(saisie ?? "").trim().toLowerCase();
+  if (!v) return null;
+  return prisma.finUtilisateur.findUnique({ where: v.includes("@") ? { courriel: v } : { identifiant: v } });
 }

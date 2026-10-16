@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatMontant, nomUtilisateur } from "@/lib/finances";
+import { formatMontant, libelleOrg, nomUtilisateur } from "@/lib/finances";
 import { exigerUtilisateur } from "./components/garde";
 import DemandeListe from "./components/DemandeListe";
+import Icone from "./components/Icone";
 
 export const dynamic = "force-dynamic";
 
-const avecDemandeur = { demandeur: { select: { prenom: true, nom: true } } } as const;
+const avecDemandeur = { demandeur: { select: { titre: true, prenom: true, nom: true, ministere: true, departement: true } } } as const;
 
 export default async function TableauDeBord() {
   const moi = await exigerUtilisateur();
+  if (moi.role === "delegue") return <TableauExterne id={moi.id} />;
   const finances = moi.role === "superadmin";
   const estLeader = moi.role !== "utilisateur";
 
@@ -36,9 +38,13 @@ export default async function TableauDeBord() {
       : Promise.resolve([]),
     estLeader
       ? prisma.finDemande.findMany({
-          where: { approbateurId: moi.id, statut: { not: "attente_leader" } },
+          where: {
+            demandeurId: { not: moi.id },
+            OR: [{ approbateurId: moi.id }, ...(moi.ministere ? [{ ministere: moi.ministere }] : [])],
+            NOT: { statut: "attente_leader", approbateurId: moi.id },
+          },
           orderBy: { updatedAt: "desc" },
-          take: 20,
+          take: 30,
           include: avecDemandeur,
         })
       : Promise.resolve([]),
@@ -52,17 +58,23 @@ export default async function TableauDeBord() {
 
   return (
     <>
-      <h1>Bonjour {nomUtilisateur(moi)} 👋</h1>
-      <p className="sous">Demandes de décaissement et de remboursement.</p>
-
-      <div className="fin-actions" style={{ marginBottom: 18 }}>
-        <Link href="/nouvelle?type=remboursement" className="fin-btn">
-          + Remboursement
-        </Link>
-        <Link href="/nouvelle?type=decaissement" className="fin-btn blanc">
-          + Décaissement
-        </Link>
-      </div>
+      <section className="fin-hero">
+        <div className="fin-hero-sur">{libelleOrg(moi.ministere, moi.departement) || "Département des finances"}</div>
+        <h1>Bonjour {nomUtilisateur(moi)}</h1>
+        <p className="sous">
+          {aTraiter > 0
+            ? `${aTraiter} demande${aTraiter > 1 ? "s" : ""} attend${aTraiter > 1 ? "ent" : ""} votre décision.`
+            : "Demandes de décaissement et de remboursement, de la soumission au paiement."}
+        </p>
+        <div className="fin-actions">
+          <Link href="/nouvelle?type=remboursement" className="fin-btn">
+            <Icone nom="recu" taille={18} /> Remboursement
+          </Link>
+          <Link href="/nouvelle?type=decaissement" className="fin-btn blanc">
+            <Icone nom="avance" taille={18} /> Décaissement
+          </Link>
+        </div>
+      </section>
 
       <div className="fin-stats">
         {(estLeader || finances) && (
@@ -101,7 +113,7 @@ export default async function TableauDeBord() {
 
       {estLeader && (
         <>
-          <h2>À approuver — mon équipe</h2>
+          <h2>À approuver — {moi.ministere ? `ministère ${moi.ministere}` : "1ʳᵉ approbation"}</h2>
           <DemandeListe demandes={aApprouverLeader} avecDemandeur vide="Aucune demande en attente de votre approbation." />
         </>
       )}
@@ -111,7 +123,7 @@ export default async function TableauDeBord() {
           <h2>À approuver — finances</h2>
           <DemandeListe demandes={aApprouverFinances} avecDemandeur vide="Aucune demande en attente des finances." />
           <h2>Approuvées — à payer</h2>
-          <DemandeListe demandes={aPayer} avecDemandeur vide="Aucun paiement en attente." />
+          <DemandeListe demandes={aPayer} avecDemandeur pdf vide="Aucun paiement en attente." />
         </>
       )}
 
@@ -120,8 +132,41 @@ export default async function TableauDeBord() {
 
       {estLeader && equipe.length > 0 && (
         <>
-          <h2>Demandes de mon équipe (déjà traitées)</h2>
+          <h2>Autres demandes {moi.ministere ? `du ministère ${moi.ministere}` : "que j'ai approuvées"}</h2>
           <DemandeListe demandes={equipe} avecDemandeur vide="" />
+        </>
+      )}
+    </>
+  );
+}
+
+// Compte partagé d'approbateur externe : uniquement les demandes qui lui sont attribuées.
+async function TableauExterne({ id }: { id: string }) {
+  const [aTraiter, traitees] = await Promise.all([
+    prisma.finDemande.findMany({ where: { approbateurId: id, statut: "attente_leader" }, orderBy: { createdAt: "asc" }, include: avecDemandeur }),
+    prisma.finDemande.findMany({
+      where: { approbateurId: id, statut: { not: "attente_leader" } },
+      orderBy: { updatedAt: "desc" },
+      take: 30,
+      include: avecDemandeur,
+    }),
+  ]);
+  return (
+    <>
+      <section className="fin-hero">
+        <div className="fin-hero-sur">Compte partagé</div>
+        <h1>Approbateur externe</h1>
+        <p className="sous" style={{ marginBottom: 0 }}>
+          Ouvrez une demande : avant de décider, vous indiquerez votre nom complet, votre fonction dans l&apos;église, votre signature et
+          pourquoi c&apos;est vous qui l&apos;approuvez.
+        </p>
+      </section>
+      <h2>Demandes qui vous sont attribuées ({aTraiter.length})</h2>
+      <DemandeListe demandes={aTraiter} avecDemandeur vide="Aucune demande en attente." />
+      {traitees.length > 0 && (
+        <>
+          <h2>Déjà traitées</h2>
+          <DemandeListe demandes={traitees} avecDemandeur vide="" />
         </>
       )}
     </>

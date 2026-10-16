@@ -11,9 +11,18 @@ export async function POST(req: Request) {
   const mdp = String(b.motDePasse || "");
   const pb = problemeMotDePasse(mdp);
   if (pb) return NextResponse.json({ error: pb }, { status: 400 });
+  // Compte créé sans courriel (organigramme) : la personne donne le sien ici.
+  let courriel = u.courriel;
+  if (!courriel) {
+    courriel = String(b.courriel || "").trim().toLowerCase().slice(0, 160);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel))
+      return NextResponse.json({ error: "Indiquez un courriel valide : il recevra vos codes de connexion." }, { status: 400 });
+    if (await prisma.finUtilisateur.findUnique({ where: { courriel } }))
+      return NextResponse.json({ error: "Ce courriel est déjà utilisé par un autre compte." }, { status: 409 });
+  }
   await prisma.finUtilisateur.update({
     where: { id: u.id },
-    data: { motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
+    data: { courriel, motDePasse: hacherMotDePasse(mdp), jetonHash: null, jetonExpire: null, echecs: 0, verrouJusqua: null },
   });
   await fermerSessionsDe(u.id);
   return NextResponse.json({ ok: true });
