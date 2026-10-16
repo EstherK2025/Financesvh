@@ -146,7 +146,7 @@ export default function ConnexionForm() {
       <form className="fin-carte" onSubmit={creerMotDePasse}>
         <div className="fin-note">
           Bienvenue ! C&apos;est la <b>première connexion</b> du compte <b>{compte}</b>. Indiquez votre nom (responsable de ce
-          compte) et créez votre propre mot de passe. Votre identifiant deviendra automatiquement <b>prénom.nom</b>. Le mot de passe temporaire ne fonctionnera plus pour ce compte.
+          compte) et créez votre propre mot de passe. Votre identifiant deviendra automatiquement <b>prenom.nom</b> (sans accents). Le mot de passe temporaire ne fonctionnera plus pour ce compte.
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
         <ChampTitre valeur={titre} onChange={setTitre} titres={listeTitres} />
