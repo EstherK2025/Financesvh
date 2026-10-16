@@ -149,6 +149,7 @@ export async function fermerSession() {
 }
 
 export type UtilisateurCourant = {
+  tutorielVu: boolean;
   id: string;
   titre: string | null;
   prenom: string;
@@ -168,7 +169,7 @@ export async function utilisateurCourant(): Promise<UtilisateurCourant | null> {
   const s = await prisma.finSession.findUnique({ where: { jetonHash: sha256(jeton) }, include: { utilisateur: true } });
   if (!s || s.expire < new Date() || !s.utilisateur.actif) return null;
   const u = s.utilisateur;
-  return { id: u.id, titre: u.titre, prenom: u.prenom, nom: u.nom, identifiant: u.identifiant, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId, ministere: u.ministere, departement: u.departement };
+  return { id: u.id, titre: u.titre, prenom: u.prenom, nom: u.nom, identifiant: u.identifiant, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId, ministere: u.ministere, departement: u.departement, tutorielVu: u.tutorielVu };
 }
 
 // Fermer toutes les sessions d'un compte (désactivation, nouveau mot de passe).
