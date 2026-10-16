@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const p = await prisma.finPiece.findUnique({
     where: { id },
-    include: { demande: { select: { demandeurId: true, approbateurId: true, statut: true } } },
+    include: { demande: { select: { demandeurId: true, approbateurId: true, statut: true, ministere: true } } },
   });
   if (!p || !peutVoir(moi, p.demande)) return new Response("Introuvable.", { status: 404 });
   return new Response(Buffer.from(p.donnees), {

@@ -9,12 +9,16 @@ export const FIN = {
   organisation: "Vases d'Honneur",
   sigle: "VH",
   // Logo : déposer le fichier dans public/ (sinon le sigle texte s'affiche).
-  logo: "/vh-logo.png",
+  logo: "/vh-logo.png", // symbole du logo (même fichier que Rapports VH)
   contactEmail: "info@eventsevhnb.ca",
 } as const;
 
 // Premier compte super admin, proposé à l'installation (crée ensuite les autres).
 export const PREMIER_ADMIN = { prenom: "GA", nom: "Maïté", identifiant: "estherk" } as const;
+
+export function libelleOrg(m: string | null | undefined, d: string | null | undefined): string {
+  return [m, d].filter(Boolean).join(" · ");
+}
 
 // Catégories de dépenses (👉 ajouter / retirer librement).
 export const CATEGORIES = [
@@ -44,15 +48,16 @@ export const MODES_PAIEMENT = {
   comptant: "Comptant",
 } as const;
 
+// 3 niveaux, alignés sur Rapports VH.
 export const ROLES = {
-  utilisateur: "Utilisateur",
-  leader: "Leader",
-  superadmin: "Super admin (finances)",
+  utilisateur: "Utilisateur (département)",
+  admin: "Administrateur (ministère)",
+  superadmin: "Super administrateur",
 } as const;
 export type Role = keyof typeof ROLES;
 
 export const STATUTS = {
-  attente_leader: "En attente du leader",
+  attente_leader: "En attente du ministère",
   attente_finances: "En attente des finances",
   approuvee: "Approuvée — à payer",
   payee: "Payée",
@@ -64,7 +69,7 @@ export type Statut = keyof typeof STATUTS;
 export const ACTIONS_HISTO: Record<string, string> = {
   soumise: "Demande soumise",
   resoumise: "Demande corrigée et renvoyée",
-  approuvee_leader: "Approuvée par le leader",
+  approuvee_leader: "Approuvée par le ministère",
   approuvee_finances: "Approuvée par les finances",
   refusee: "Refusée — renvoyée pour révision",
   annulee: "Annulée par le demandeur",

@@ -136,6 +136,8 @@ export type UtilisateurCourant = {
   courriel: string;
   role: Role;
   leaderId: string | null;
+  ministere: string | null;
+  departement: string | null;
 };
 
 export async function utilisateurCourant(): Promise<UtilisateurCourant | null> {
@@ -145,7 +147,7 @@ export async function utilisateurCourant(): Promise<UtilisateurCourant | null> {
   const s = await prisma.finSession.findUnique({ where: { jetonHash: sha256(jeton) }, include: { utilisateur: true } });
   if (!s || s.expire < new Date() || !s.utilisateur.actif) return null;
   const u = s.utilisateur;
-  return { id: u.id, prenom: u.prenom, nom: u.nom, identifiant: u.identifiant, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId };
+  return { id: u.id, prenom: u.prenom, nom: u.nom, identifiant: u.identifiant, courriel: u.courriel, role: u.role as Role, leaderId: u.leaderId, ministere: u.ministere, departement: u.departement };
 }
 
 // Fermer toutes les sessions d'un compte (désactivation, nouveau mot de passe).

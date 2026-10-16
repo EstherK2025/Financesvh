@@ -31,7 +31,7 @@ export default function Decision({ demandeId, statut, peut }: { demandeId: strin
     <div className="fin-carte" style={{ borderColor: "#000", marginBottom: 14 }}>
       {peut.approuver && (
         <>
-          <h2 style={{ marginTop: 0 }}>{statut === "attente_leader" ? "Votre approbation (leader)" : "Décision des finances"}</h2>
+          <h2 style={{ marginTop: 0 }}>{statut === "attente_leader" ? "Votre approbation (ministère)" : "Décision des finances"}</h2>
           <label className="fin-champ">
             <span>Commentaire (obligatoire en cas de refus)</span>
             <textarea className="fin-input" maxLength={1000} value={commentaire} onChange={(e) => setCommentaire(e.target.value)} />

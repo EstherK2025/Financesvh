@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ROLES, nomUtilisateur } from "@/lib/finances";
+import { ROLES, libelleOrg, nomUtilisateur } from "@/lib/finances";
 import { exigerUtilisateur } from "../components/garde";
 import MotDePasseForm from "./MotDePasseForm";
 
@@ -24,8 +24,14 @@ export default async function ComptePage() {
           <dd>{ROLES[moi.role]}</dd>
           {moi.role !== "superadmin" && (
             <>
-              <dt>Mon leader</dt>
-              <dd>{leader ? nomUtilisateur(leader) : "Aucun (directement aux finances)"}</dd>
+              <dt>Ministère</dt>
+              <dd>{libelleOrg(moi.ministere, moi.departement) || "—"}</dd>
+              {moi.role === "utilisateur" && (
+                <>
+                  <dt>Approuvé par</dt>
+                  <dd>{leader ? nomUtilisateur(leader) : "Directement les finances"}</dd>
+                </>
+              )}
             </>
           )}
           <dt>Connexion</dt>

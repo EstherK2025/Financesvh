@@ -6,9 +6,10 @@ import { nomUtilisateur, type Statut } from "./finances";
 // ───────────────────────────────────────────────────────────
 // Règles du circuit d'approbation.
 //
-//   Utilisateur ─▶ son leader ─▶ finances (super admins) ─▶ payé
+//   Utilisateur (département) ─▶ administrateur du ministère ─▶ finances (super admin) ─▶ payé
 //
-// • Le leader d'une personne voit ses demandes et les approuve en premier.
+// • L'administrateur d'un ministère voit les demandes de son ministère et
+//   approuve en premier celles de ses départements.
 // • Puis la demande va chez les finances, qui l'approuvent et la paient.
 // • Refus (leader ou finances) : retour au demandeur avec un motif, pour
 //   révision (corriger et renvoyer) ou annulation.
@@ -30,10 +31,11 @@ export function statutInitial(approbateurId: string | null): Statut {
   return approbateurId ? "attente_leader" : "attente_finances";
 }
 
-type DemandeDroits = { demandeurId: string; approbateurId: string | null; statut: string };
+type DemandeDroits = { demandeurId: string; approbateurId: string | null; statut: string; ministere?: string | null };
 
 export function peutVoir(u: UtilisateurCourant, d: DemandeDroits): boolean {
-  return u.role === "superadmin" || d.demandeurId === u.id || d.approbateurId === u.id;
+  if (u.role === "superadmin" || d.demandeurId === u.id || d.approbateurId === u.id) return true;
+  return u.role === "admin" && !!u.ministere && d.ministere === u.ministere;
 }
 
 export function actionsPossibles(u: UtilisateurCourant, d: DemandeDroits) {
@@ -91,13 +93,4 @@ export async function notifier(demandeId: string, motif?: string) {
       await courrielSuivi(dem.courriel, dem.prenom, info, "Le paiement de votre demande a été effectué." + (d.referencePaiement ? ` Référence : ${d.referencePaiement}.` : ""));
       break;
   }
-}
-
-// Leader assignable à un compte : null = aucun ; false = invalide.
-export async function leaderValide(id: unknown, pour?: string): Promise<string | null | false> {
-  const leaderId = String(id || "");
-  if (!leaderId) return null;
-  if (leaderId === pour) return false;
-  const l = await prisma.finUtilisateur.findUnique({ where: { id: leaderId } });
-  return l && l.actif && (l.role === "leader" || l.role === "superadmin") ? l.id : false;
 }

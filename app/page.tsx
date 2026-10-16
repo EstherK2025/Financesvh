@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatMontant, nomUtilisateur } from "@/lib/finances";
+import { formatMontant, libelleOrg, nomUtilisateur } from "@/lib/finances";
 import { exigerUtilisateur } from "./components/garde";
 import DemandeListe from "./components/DemandeListe";
 
@@ -36,9 +36,13 @@ export default async function TableauDeBord() {
       : Promise.resolve([]),
     estLeader
       ? prisma.finDemande.findMany({
-          where: { approbateurId: moi.id, statut: { not: "attente_leader" } },
+          where: {
+            demandeurId: { not: moi.id },
+            OR: [{ approbateurId: moi.id }, ...(moi.ministere ? [{ ministere: moi.ministere }] : [])],
+            NOT: { statut: "attente_leader", approbateurId: moi.id },
+          },
           orderBy: { updatedAt: "desc" },
-          take: 20,
+          take: 30,
           include: avecDemandeur,
         })
       : Promise.resolve([]),
@@ -53,7 +57,7 @@ export default async function TableauDeBord() {
   return (
     <>
       <h1>Bonjour {nomUtilisateur(moi)} 👋</h1>
-      <p className="sous">Demandes de décaissement et de remboursement.</p>
+      <p className="sous">{libelleOrg(moi.ministere, moi.departement) || "Demandes de décaissement et de remboursement."}</p>
 
       <div className="fin-actions" style={{ marginBottom: 18 }}>
         <Link href="/nouvelle?type=remboursement" className="fin-btn">
@@ -101,7 +105,7 @@ export default async function TableauDeBord() {
 
       {estLeader && (
         <>
-          <h2>À approuver — mon équipe</h2>
+          <h2>À approuver — {moi.ministere ? `ministère ${moi.ministere}` : "1ʳᵉ approbation"}</h2>
           <DemandeListe demandes={aApprouverLeader} avecDemandeur vide="Aucune demande en attente de votre approbation." />
         </>
       )}
@@ -120,7 +124,7 @@ export default async function TableauDeBord() {
 
       {estLeader && equipe.length > 0 && (
         <>
-          <h2>Demandes de mon équipe (déjà traitées)</h2>
+          <h2>Autres demandes {moi.ministere ? `du ministère ${moi.ministere}` : "que j'ai approuvées"}</h2>
           <DemandeListe demandes={equipe} avecDemandeur vide="" />
         </>
       )}

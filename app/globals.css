@@ -29,16 +29,18 @@ button {
 
 /* ═══════════════════════════════════════════════════════════
    DÉPARTEMENT DES FINANCES
-   Thème sobre : blanc · noir, aux couleurs de Vases d'Honneur.
+   Thème sobre : blanc · texte noir, aux couleurs de Vases d'Honneur
+   (vert, or, orange du logo).
    👉 COULEURS VH : modifier uniquement les 3 variables --fin-primaire,
       --fin-accent et --fin-accent-fonce ci-dessous.
    ═══════════════════════════════════════════════════════════ */
 
 .fin {
-  /* Couleurs Vases d'Honneur (à confirmer avec le logo officiel). */
-  --fin-primaire: #000; /* barre du haut, boutons principaux */
-  --fin-accent: #c9a227; /* liseré, boutons « payer », mises en avant */
-  --fin-accent-fonce: #8a6a12;
+  /* Couleurs Vases d'Honneur — tirées du logo (public/vh-logo.png). */
+  --fin-primaire: #006c67; /* vert VH : barre du haut, boutons principaux */
+  --fin-accent: #ceae1d; /* or VH : liseré, bouton « payer », mises en avant */
+  --fin-accent-fonce: #8a740f;
+  --fin-orange: #ec8002; /* orange VH */
   --fin-encre: #111;
   --fin-gris: #6b6b6b;
   --fin-trait: #e4e4e4;
@@ -364,8 +366,8 @@ textarea.fin-input {
   margin-top: 2px;
 }
 .fin-stat.accent {
-  border-color: var(--fin-accent);
-  background: #fffbea;
+  border-color: var(--fin-orange);
+  background: #fff5e8;
 }
 
 /* Tableaux */
@@ -580,4 +582,36 @@ textarea.fin-input {
 }
 .fin-table select.fin-input {
   min-width: 150px;
+}
+.fin-ministere {
+  margin-top: 26px;
+}
+.fin-ministere h2 {
+  margin: 0 0 8px;
+}
+.fin-ministere h2 span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fin-gris);
+  margin-left: 6px;
+}
+/* Comptes : une carte par personne sur téléphone (boutons sous le nom). */
+@media (max-width: 640px) {
+  .fin-comptes tr {
+    display: block;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--fin-trait);
+  }
+  .fin-comptes tr:last-child {
+    border-bottom: none;
+  }
+  .fin-comptes td {
+    display: block;
+    border: none;
+    padding: 3px 0;
+  }
+  .fin-comptes .fin-actions {
+    justify-content: flex-start !important;
+    margin-top: 6px;
+  }
 }

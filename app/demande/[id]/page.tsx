@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ACTIONS_HISTO, MODES_PAIEMENT, TYPES, formatMontant, nomUtilisateur, reference, type TypeDemande } from "@/lib/finances";
+import { ACTIONS_HISTO, MODES_PAIEMENT, TYPES, formatMontant, libelleOrg, nomUtilisateur, reference, type TypeDemande } from "@/lib/finances";
 import { actionsPossibles, peutVoir } from "@/lib/fin-demandes";
 import { exigerUtilisateur } from "../../components/garde";
 import { contexteFormulaire } from "../../components/circuit";
@@ -31,7 +31,7 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
     d.statut === "attente_leader" ? 1 : d.statut === "attente_finances" ? 2 : d.statut === "approuvee" ? 3 : d.statut === "payee" ? 4 : -1;
   const etapes = [
     { cle: "soumise", libelle: "Soumise" },
-    ...(d.approbateur ? [{ cle: "leader", libelle: `Leader : ${nomUtilisateur(d.approbateur)}` }] : []),
+    ...(d.approbateur ? [{ cle: "leader", libelle: `${d.approbateur.ministere || "1ʳᵉ approbation"} : ${nomUtilisateur(d.approbateur)}` }] : []),
     { cle: "finances", libelle: "Finances" },
     { cle: "payee", libelle: "Payée" },
   ];
@@ -84,6 +84,12 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
             )}
             <dt>Demandeur</dt>
             <dd>{nomUtilisateur(d.demandeur)}</dd>
+            {(d.ministere || d.departement) && (
+              <>
+                <dt>Ministère</dt>
+                <dd>{libelleOrg(d.ministere, d.departement)}</dd>
+              </>
+            )}
             <dt>1ʳᵉ approbation</dt>
             <dd>{d.approbateur ? nomUtilisateur(d.approbateur) : "Directement aux finances"}</dd>
             <dt>Date de dépense</dt>

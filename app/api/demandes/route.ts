@@ -25,6 +25,8 @@ export async function POST(req: Request) {
       statut: statutInitial(approbateurId),
       demandeurId: moi.id,
       approbateurId,
+      ministere: moi.ministere,
+      departement: moi.departement,
       pieces: { create: f.fichiers },
       historique: { create: { auteurId: moi.id, action: "soumise" } },
     },

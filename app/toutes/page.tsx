@@ -15,7 +15,7 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
   const annee = /^\d{4}$/.test(sp.annee || "") ? Number(sp.annee) : new Date().getFullYear();
   const periode = { gte: new Date(`${annee}-01-01T00:00:00Z`), lt: new Date(`${annee + 1}-01-01T00:00:00Z`) };
 
-  const [demandes, parCategorie] = await Promise.all([
+  const [demandes, parCategorie, parMinistere] = await Promise.all([
     prisma.finDemande.findMany({
       where: { createdAt: periode, ...(statut ? { statut } : {}), ...(type ? { type } : {}) },
       orderBy: { createdAt: "desc" },
@@ -28,7 +28,27 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
       _sum: { montant: true },
       _count: true,
     }),
+    prisma.finDemande.groupBy({
+      by: ["ministere", "statut"],
+      where: { createdAt: periode, statut: { not: "annulee" }, ...(type ? { type } : {}) },
+      _sum: { montant: true },
+      _count: true,
+    }),
   ]);
+
+  // Totaux par ministère (même calcul que par catégorie).
+  const mins = new Map<string, { nb: number; demande: number; approuve: number; paye: number }>();
+  for (const g of parMinistere) {
+    const k = g.ministere || "Sans ministère";
+    const c = mins.get(k) || { nb: 0, demande: 0, approuve: 0, paye: 0 };
+    const m = g._sum.montant || 0;
+    c.nb += g._count;
+    c.demande += m;
+    if (g.statut === "approuvee" || g.statut === "payee") c.approuve += m;
+    if (g.statut === "payee") c.paye += m;
+    mins.set(k, c);
+  }
+  const lignesMin = [...mins.entries()].sort(([a], [b]) => a.localeCompare(b, "fr")).map(([k, v]) => ({ categorie: k, ...v }));
 
   // Totaux par catégorie : demandé (non annulé), approuvé, payé.
   const cats = new Map<string, { nb: number; demande: number; approuve: number; paye: number }>();
@@ -43,8 +63,6 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
   }
   const ordre = [...CATEGORIES, ...[...cats.keys()].filter((k) => !(CATEGORIES as readonly string[]).includes(k))];
   const lignes = ordre.filter((k) => cats.has(k)).map((k) => ({ categorie: k, ...cats.get(k)! }));
-  const tot = lignes.reduce((s, l) => ({ nb: s.nb + l.nb, demande: s.demande + l.demande, approuve: s.approuve + l.approuve, paye: s.paye + l.paye }), { nb: 0, demande: 0, approuve: 0, paye: 0 });
-
   const lien = (p: Record<string, string | number>) => {
     const q = new URLSearchParams({ ...(statut ? { statut } : {}), ...(type ? { type } : {}), annee: String(annee) });
     for (const [k, v] of Object.entries(p)) (v === "" ? q.delete(k) : q.set(k, String(v)));
@@ -68,44 +86,11 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
         </div>
       </div>
 
+      <h2>Par ministère</h2>
+      <TableauTotaux lignes={lignesMin} titre="Ministère" />
+
       <h2>Par catégorie</h2>
-      {lignes.length === 0 ? (
-        <div className="fin-vide">Aucune demande sur cette période.</div>
-      ) : (
-        <div className="fin-scroll">
-          <table className="fin-table">
-            <thead>
-              <tr>
-                <th>Catégorie</th>
-                <th style={{ textAlign: "right" }}>Demandes</th>
-                <th style={{ textAlign: "right" }}>Demandé</th>
-                <th style={{ textAlign: "right" }}>Approuvé</th>
-                <th style={{ textAlign: "right" }}>Payé</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lignes.map((l) => (
-                <tr key={l.categorie}>
-                  <td>{l.categorie}</td>
-                  <td className="num">{l.nb}</td>
-                  <td className="num">{formatMontant(l.demande)}</td>
-                  <td className="num">{formatMontant(l.approuve)}</td>
-                  <td className="num">{formatMontant(l.paye)}</td>
-                </tr>
-              ))}
-              <tr style={{ background: "var(--fin-fond)" }}>
-                <td>
-                  <b>Total</b>
-                </td>
-                <td className="num">{tot.nb}</td>
-                <td className="num">{formatMontant(tot.demande)}</td>
-                <td className="num">{formatMontant(tot.approuve)}</td>
-                <td className="num">{formatMontant(tot.paye)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
+      <TableauTotaux lignes={lignes} titre="Catégorie" />
 
       <h2>Liste</h2>
       <div className="fin-filtres">
@@ -130,5 +115,47 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
       </div>
       <DemandeListe demandes={demandes} avecDemandeur vide="Aucune demande pour ces filtres." />
     </>
+  );
+}
+
+type LigneTotal = { categorie: string; nb: number; demande: number; approuve: number; paye: number };
+
+function TableauTotaux({ lignes, titre }: { lignes: LigneTotal[]; titre: string }) {
+  if (lignes.length === 0) return <div className="fin-vide">Aucune demande sur cette période.</div>;
+  const tot = lignes.reduce((s, l) => ({ nb: s.nb + l.nb, demande: s.demande + l.demande, approuve: s.approuve + l.approuve, paye: s.paye + l.paye }), { nb: 0, demande: 0, approuve: 0, paye: 0 });
+  return (
+    <div className="fin-scroll">
+      <table className="fin-table">
+        <thead>
+          <tr>
+            <th>{titre}</th>
+            <th style={{ textAlign: "right" }}>Demandes</th>
+            <th style={{ textAlign: "right" }}>Demandé</th>
+            <th style={{ textAlign: "right" }}>Approuvé</th>
+            <th style={{ textAlign: "right" }}>Payé</th>
+          </tr>
+        </thead>
+        <tbody>
+          {lignes.map((l) => (
+            <tr key={l.categorie}>
+              <td>{l.categorie}</td>
+              <td className="num">{l.nb}</td>
+              <td className="num">{formatMontant(l.demande)}</td>
+              <td className="num">{formatMontant(l.approuve)}</td>
+              <td className="num">{formatMontant(l.paye)}</td>
+            </tr>
+          ))}
+          <tr style={{ background: "var(--fin-fond)" }}>
+            <td>
+              <b>Total</b>
+            </td>
+            <td className="num">{tot.nb}</td>
+            <td className="num">{formatMontant(tot.demande)}</td>
+            <td className="num">{formatMontant(tot.approuve)}</td>
+            <td className="num">{formatMontant(tot.paye)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }

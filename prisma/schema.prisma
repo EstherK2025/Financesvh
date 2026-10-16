@@ -19,17 +19,20 @@ datasource db {
 // Modèles préfixés « Fin » pour cohabiter avec les autres sites.
 // ───────────────────────────────────────────────────────────
 
-// Compte utilisateur. 3 niveaux : "utilisateur" | "leader" | "superadmin".
+// Compte utilisateur. 3 niveaux (comme Rapports VH) :
+//   "utilisateur" (un département) | "admin" (un ministère) | "superadmin".
 model FinUtilisateur {
   id           String   @id @default(cuid())
   prenom       String
   nom          String
   identifiant  String?  @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules
   courriel     String   @unique // en minuscules — reçoit le code de connexion
-  role         String   @default("utilisateur") // "utilisateur" | "leader" | "superadmin"
+  role         String   @default("utilisateur") // "utilisateur" | "admin" | "superadmin"
+  ministere    String? // ministère du compte (admin : le sien ; utilisateur : celui de son administrateur)
+  departement  String? // département (comptes utilisateur)
   actif        Boolean  @default(true)
   motDePasse   String? // hash scrypt "sel:hash" ; null tant que le compte n'est pas activé
-  // Leader qui approuve en premier les demandes de cette personne.
+  // Administrateur du ministère qui approuve en premier les demandes de cette personne.
   leaderId     String?
   leader       FinUtilisateur?  @relation("FinLeader", fields: [leaderId], references: [id], onDelete: SetNull)
   equipe       FinUtilisateur[] @relation("FinLeader")
@@ -92,6 +95,8 @@ model FinDemande {
   dateDepense    DateTime?
   beneficiaire   String? // à qui verser l'argent (si différent du demandeur)
   modePaiement   String         @default("interac") // "interac" | "cheque" | "virement" | "comptant"
+  ministere      String? // ministère et département du demandeur au moment de la demande
+  departement    String?
   statut         String         @default("attente_leader")
   demandeurId    String
   demandeur      FinUtilisateur @relation("FinDemandeur", fields: [demandeurId], references: [id])
@@ -111,6 +116,7 @@ model FinDemande {
   @@index([demandeurId])
   @@index([approbateurId])
   @@index([statut])
+  @@index([ministere])
 }
 
 // Pièce jointe (facture, reçu, devis) stockée en base.
