@@ -41,6 +41,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     return true;
   });
   if (!maj) return NextResponse.json({ error: "La demande a changé entre-temps. Rechargez la page." }, { status: 409 });
-  await notifier(id);
+  await notifier(id, undefined, true);
   return NextResponse.json({ ok: true });
 }

@@ -236,7 +236,7 @@ export default function ConnexionForm() {
     return (
       <form className="fin-carte" onSubmit={envoyerCode}>
         <div className="fin-note">
-          <b>Double authentification</b> — ouvrez votre application <b>Authenticator</b> et entrez le code affiché pour « Finances VH ».
+          <b>Double authentification</b> — ouvrez votre application <b>Authenticator</b> et entrez le code affiché pour « Portail des dépenses VH » (ou « Finances VH » si vous l&apos;avez configurée avant).
         </div>
         {erreur && <div className="fin-erreur">{erreur}</div>}
         {champCode}

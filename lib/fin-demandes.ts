@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import type { UtilisateurCourant } from "./fin-auth";
-import { courrielAApprouver, courrielSuivi } from "./fin-email";
+import { courrielAApprouver, courrielNouvelleDemande, courrielSuivi } from "./fin-email";
 import { nomUtilisateur, type Statut } from "./finances";
 
 // ───────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ export function actionsPossibles(u: UtilisateurCourant, d: DemandeDroits) {
 }
 
 // Envoie les courriels correspondant au statut actuel de la demande.
-export async function notifier(demandeId: string, motif?: string) {
+export async function notifier(demandeId: string, motif?: string, nouvelle = false) {
   const d = await prisma.finDemande.findUnique({
     where: { id: demandeId },
     include: { demandeur: true, approbateur: true },
@@ -71,15 +71,24 @@ export async function notifier(demandeId: string, motif?: string) {
   const dem = d.demandeur;
 
   switch (d.statut) {
-    case "attente_leader":
+    case "attente_leader": {
       if (d.approbateur?.actif) await courrielAApprouver(d.approbateur.courriel, nomUtilisateur(d.approbateur), info);
+      if (nouvelle) {
+        // Accusé de réception au demandeur + information aux finances.
+        await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, `Votre demande a bien été reçue. Elle attend l'approbation de ${d.approbateur ? nomUtilisateur(d.approbateur) : "votre ministère"}, puis celle des finances.`);
+        const finances = await prisma.finUtilisateur.findMany({ where: { role: "superadmin", actif: true, id: { notIn: [d.demandeurId, d.approbateurId || ""] } } });
+        await Promise.all(finances.map((f) => courrielNouvelleDemande(f.courriel, nomUtilisateur(f), info, d.approbateur ? nomUtilisateur(d.approbateur) : "son ministère")));
+      }
       break;
+    }
     case "attente_finances": {
       const finances = await prisma.finUtilisateur.findMany({
         where: { role: "superadmin", actif: true, id: { not: d.demandeurId } },
       });
       await Promise.all(finances.map((f) => courrielAApprouver(f.courriel, nomUtilisateur(f), info)));
-      if (d.approbateurId)
+      if (nouvelle)
+        await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Votre demande a bien été reçue. Elle attend maintenant l'approbation des finances.");
+      else if (d.approbateurId)
         await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Votre ministère a approuvé votre demande. Elle est maintenant entre les mains des finances.");
       break;
     }
@@ -87,7 +96,13 @@ export async function notifier(demandeId: string, motif?: string) {
       await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Votre demande a été refusée et vous est renvoyée. Vous pouvez la corriger et la renvoyer, ou l'annuler.", motif);
       break;
     case "approuvee":
-      await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Bonne nouvelle : les finances ont approuvé votre demande. Le paiement suivra.");
+      await courrielSuivi(
+        dem.courriel,
+        nomUtilisateur(dem),
+        info,
+        "Bonne nouvelle : les finances ont approuvé votre demande. Le paiement suivra." +
+          (d.type === "decaissement" ? " Pensez à ajouter sur la plateforme les justificatifs (factures, reçus) une fois la dépense faite." : ""),
+      );
       break;
     case "payee":
       await courrielSuivi(dem.courriel, nomUtilisateur(dem), info, "Le paiement de votre demande a été effectué." + (d.referencePaiement ? ` Référence : ${d.referencePaiement}.` : ""));

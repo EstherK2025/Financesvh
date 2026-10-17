@@ -1,4 +1,4 @@
-# Finances VH — Département des finances de Vases d'Honneur
+# Portail des dépenses — Vases d'Honneur
 
 Plateforme web **interne** (site de GA Joël) pour les **demandes de décaissement
 et de remboursement** : chaque membre fait ses demandes en ligne, l'administrateur de son ministère les

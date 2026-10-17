@@ -25,43 +25,43 @@ datasource db {
 //   de passe fixes) ; à chaque décision, la personne saisit son nom, sa
 //   fonction, sa signature et la justification.
 model FinUtilisateur {
-  id           String   @id @default(cuid())
-  titre        String? // GA, AP, PA, AE, AM, Responsable (affiché devant le nom)
+  id                String           @id @default(cuid())
+  titre             String? // GA, AP, PA, AE, AM, Responsable (affiché devant le nom)
   // true quand la personne responsable a elle-même saisi son nom (première
   // connexion). « Réinitialiser le compte » le remet à false (nouveau responsable).
-  nomConfirme  Boolean  @default(false)
-  prenom       String
-  nom          String
-  identifiant  String?  @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules
-  courriel     String?  @unique // en minuscules — reçoit le code de connexion ; peut être saisi par la personne à l'activation
-  role         String   @default("utilisateur") // "utilisateur" | "admin" | "superadmin"
-  ministere    String? // ministère du compte (admin : le sien ; utilisateur : celui de son administrateur)
-  departement  String? // département (comptes utilisateur)
-  actif        Boolean  @default(true)
-  motDePasse   String? // hash scrypt "sel:hash" ; null tant que le compte n'est pas activé
+  nomConfirme       Boolean          @default(false)
+  prenom            String
+  nom               String
+  identifiant       String?          @unique // nom d'utilisateur pour se connecter (ex. « estherk »), en minuscules
+  courriel          String?          @unique // en minuscules — reçoit le code de connexion ; peut être saisi par la personne à l'activation
+  role              String           @default("utilisateur") // "utilisateur" | "admin" | "superadmin"
+  ministere         String? // ministère du compte (admin : le sien ; utilisateur : celui de son administrateur)
+  departement       String? // département (comptes utilisateur)
+  actif             Boolean          @default(true)
+  motDePasse        String? // hash scrypt "sel:hash" ; null tant que le compte n'est pas activé
   // Administrateur du ministère qui approuve en premier les demandes de cette personne.
-  leaderId     String?
-  leader       FinUtilisateur?  @relation("FinLeader", fields: [leaderId], references: [id], onDelete: SetNull)
-  equipe       FinUtilisateur[] @relation("FinLeader")
+  leaderId          String?
+  leader            FinUtilisateur?  @relation("FinLeader", fields: [leaderId], references: [id], onDelete: SetNull)
+  equipe            FinUtilisateur[] @relation("FinLeader")
   // Lien d'activation / de réinitialisation du mot de passe (hash du jeton).
-  jetonHash    String?  @unique
-  jetonExpire  DateTime?
+  jetonHash         String?          @unique
+  jetonExpire       DateTime?
   // Protection contre les essais de mot de passe répétés.
-  echecs       Int      @default(0)
-  verrouJusqua DateTime?
+  echecs            Int              @default(0)
+  verrouJusqua      DateTime?
   derniereConnexion DateTime?
-  tutorielVu   Boolean   @default(false) // tutoriel de bienvenue déjà vu (revoir : page Guide)
+  tutorielVu        Boolean          @default(false) // tutoriel de bienvenue déjà vu (revoir : page Guide)
   // Double authentification par application Authenticator (TOTP).
-  totpSecret   String? // clé partagée (base32), créée au premier enrôlement
-  totpActif    Boolean  @default(false) // QR code scanné et premier code validé
-  totpDernier  Int? // dernier pas de temps accepté (un code ne sert qu'une fois)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  totpSecret        String? // clé partagée (base32), créée au premier enrôlement
+  totpActif         Boolean          @default(false) // QR code scanné et premier code validé
+  totpDernier       Int? // dernier pas de temps accepté (un code ne sert qu'une fois)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
-  sessions     FinSession[]
-  demandes     FinDemande[]    @relation("FinDemandeur")
-  aApprouver   FinDemande[]    @relation("FinApprobateur")
-  historique   FinHistorique[]
+  sessions   FinSession[]
+  demandes   FinDemande[]    @relation("FinDemandeur")
+  aApprouver FinDemande[]    @relation("FinApprobateur")
+  historique FinHistorique[]
 }
 
 // Session ouverte après la double authentification (cookie = jeton aléatoire,
@@ -82,30 +82,35 @@ model FinSession {
 //           refus à n'importe quelle étape → "a_reviser" (retour au demandeur)
 //           le demandeur peut alors corriger et renvoyer, ou "annulee".
 model FinDemande {
-  id             String         @id @default(cuid())
-  numero         Int            @unique @default(autoincrement()) // référence FIN-0001
-  type           String // "decaissement" | "remboursement"
-  categorie      String
-  objet          String
-  description    String?
-  montant        Int // en cents ($CAD)
-  dateDepense    DateTime?
-  beneficiaire   String? // à qui verser l'argent (si différent du demandeur)
-  modePaiement   String         @default("interac") // "interac" | "cheque" | "virement" | "comptant"
-  ministere      String? // ministère et département du demandeur au moment de la demande
-  departement    String?
-  statut         String         @default("attente_leader")
-  demandeurId    String
-  demandeur      FinUtilisateur @relation("FinDemandeur", fields: [demandeurId], references: [id])
+  id                String          @id @default(cuid())
+  numero            Int             @unique @default(autoincrement()) // référence FIN-0001
+  type              String // "decaissement" | "remboursement"
+  categorie         String
+  objet             String
+  description       String?
+  montant           Int // en cents ($CAD)
+  dateDepense       DateTime?
+  beneficiaire      String? // à qui verser l'argent (si différent du demandeur)
+  modePaiement      String          @default("interac") // "interac" | "cheque" | "virement" | "comptant"
+  ministere         String? // ministère et département du demandeur au moment de la demande
+  departement       String?
+  statut            String          @default("attente_leader")
+  // Décaissement : justificatifs (preuves de dépense) à fournir après l'approbation des finances.
+  approuveeLe       DateTime? // approbation des finances
+  justificatifsLe   DateTime? // justificatifs reçus (fin des rappels)
+  dernierRappel     DateTime?
+  nbRappels         Int             @default(0)
+  demandeurId       String
+  demandeur         FinUtilisateur  @relation("FinDemandeur", fields: [demandeurId], references: [id])
   // Personne qui approuve à la 1ʳᵉ étape (leader du demandeur, ou destinataire
   // choisi par un super admin). null = la demande va directement aux finances.
-  approbateurId  String?
-  approbateur    FinUtilisateur? @relation("FinApprobateur", fields: [approbateurId], references: [id], onDelete: SetNull)
-  motifRefus     String?
+  approbateurId     String?
+  approbateur       FinUtilisateur? @relation("FinApprobateur", fields: [approbateurId], references: [id], onDelete: SetNull)
+  motifRefus        String?
   referencePaiement String?
-  payeLe         DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  payeLe            DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   pieces     FinPiece[]
   historique FinHistorique[]
@@ -118,34 +123,35 @@ model FinDemande {
 
 // Pièce jointe (facture, reçu, devis) stockée en base.
 model FinPiece {
-  id        String     @id @default(cuid())
-  demandeId String
-  demande   FinDemande @relation(fields: [demandeId], references: [id], onDelete: Cascade)
-  nom       String
-  typeMime  String
-  taille    Int
-  donnees   Bytes
-  createdAt DateTime   @default(now())
+  id           String     @id @default(cuid())
+  demandeId    String
+  demande      FinDemande @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+  nom          String
+  typeMime     String
+  taille       Int
+  donnees      Bytes
+  justificatif Boolean    @default(false) // preuve de dépense ajoutée après coup (décaissement)
+  createdAt    DateTime   @default(now())
 
   @@index([demandeId])
 }
 
 // Journal de chaque étape (soumission, approbation, refus, paiement…).
 model FinHistorique {
-  id        String         @id @default(cuid())
-  demandeId String
-  demande   FinDemande     @relation(fields: [demandeId], references: [id], onDelete: Cascade)
-  auteurId  String?
-  auteur    FinUtilisateur? @relation(fields: [auteurId], references: [id], onDelete: SetNull)
-  action    String // "soumise" | "approuvee_leader" | "approuvee_finances" | "refusee" | "resoumise" | "annulee" | "payee" | "attribuee"
-  commentaire String?
+  id                 String          @id @default(cuid())
+  demandeId          String
+  demande            FinDemande      @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+  auteurId           String?
+  auteur             FinUtilisateur? @relation(fields: [auteurId], references: [id], onDelete: SetNull)
+  action             String // "soumise" | "approuvee_leader" | "approuvee_finances" | "refusee" | "resoumise" | "annulee" | "payee" | "attribuee"
+  commentaire        String?
   // Signature à l'approbation (image PNG en data URL) et identité du signataire
   // (pour l'approbateur externe : nom, fonction et justification saisis).
   signature          String?
   signataireNom      String?
   signataireFonction String?
   justification      String?
-  createdAt DateTime       @default(now())
+  createdAt          DateTime        @default(now())
 
   @@index([demandeId])
 }
@@ -183,6 +189,18 @@ model FinJournal {
   identifiant   String?
   ip            String?
   detail        String?
+
+  @@index([createdAt])
+}
+
+// Courriels envoyés par la plateforme (suivi : envoyé, simulé sans Resend, échec).
+model FinCourriel {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  destinataire String
+  sujet        String
+  statut       String // "envoye" | "simulation" | "echec"
+  erreur       String?
 
   @@index([createdAt])
 }
