@@ -6,11 +6,12 @@ import ReglagesTitres from "./ReglagesTitres";
 import ReglagesDelegue from "./ReglagesDelegue";
 import ReglagesPurge from "./ReglagesPurge";
 import JournalSecurite from "./JournalSecurite";
+import Courriels from "./Courriels";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReglagesPage() {
-  await exigerUtilisateur(true);
+  const moi = await exigerUtilisateur(true);
   const [mdp, l, deuxFacteurs, listeTitres, delegue, nbDemandes] = await Promise.all([
     mdpTemporaire(),
     logo(),
@@ -28,6 +29,7 @@ export default async function ReglagesPage() {
         compte={delegue ? { identifiant: delegue.identifiant || "", actif: delegue.actif, aTraiter: delegue._count.aApprouver } : null}
       />
       <ReglagesTitres titres={listeTitres} />
+      <Courriels courrielMoi={moi.courriel || ""} />
       <JournalSecurite />
       <ReglagesPurge nbDemandes={nbDemandes} />
     </div>

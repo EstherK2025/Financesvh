@@ -15,9 +15,9 @@ export default async function ConnexionPage() {
       <aside className="fin-accueil-visuel" aria-hidden="true">
         <div className="fin-hero-sur">{FIN.organisation}</div>
         <p className="fin-accueil-titre">
-          Département
+          Portail
           <br />
-          des finances
+          des dépenses
         </p>
         <ul>
           <li>

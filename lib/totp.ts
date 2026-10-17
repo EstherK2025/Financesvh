@@ -58,7 +58,7 @@ export function verifierTotp(secret: string, saisi: string, dernier: number | nu
 }
 
 // Lien lu par l'application (contenu du QR code).
-export function lienOtpauth(secret: string, compte: string, emetteur = "Finances VH"): string {
+export function lienOtpauth(secret: string, compte: string, emetteur = "Portail des dépenses VH"): string {
   const libelle = `${encodeURIComponent(emetteur)}:${encodeURIComponent(compte)}`;
   return `otpauth://totp/${libelle}?secret=${secret}&issuer=${encodeURIComponent(emetteur)}&algorithm=SHA1&digits=6&period=${PERIODE}`;
 }

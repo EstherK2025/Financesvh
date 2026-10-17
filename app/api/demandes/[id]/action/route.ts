@@ -54,6 +54,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
       nouveau = d.statut === "attente_leader" ? "attente_finances" : "approuvee";
       histo = d.statut === "attente_leader" ? "approuvee_leader" : "approuvee_finances";
+      if (histo === "approuvee_finances") data.approuveeLe = new Date();
       break;
     case "refuser":
       if (!peut.refuser) return interdit();

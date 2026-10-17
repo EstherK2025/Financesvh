@@ -5,7 +5,7 @@
 // ───────────────────────────────────────────────────────────
 
 export const FIN = {
-  nom: "Département des finances",
+  nom: "Portail des dépenses",
   organisation: "Vases d'Honneur",
   sigle: "VH",
   // Logo complet Vases d'Honneur : public/vh-logo.png, remplaçable par le super
@@ -102,6 +102,8 @@ export const ACTIONS_HISTO: Record<string, string> = {
   annulee: "Annulée par le demandeur",
   payee: "Paiement effectué",
   attribuee: "1re approbation réattribuée",
+  justificatifs: "Justificatifs de dépense ajoutés",
+  justificatifs_recus: "Justificatifs marqués reçus par les finances",
 };
 
 // Libellé d'une étape de l'historique (précise l'approbateur externe).

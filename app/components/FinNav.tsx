@@ -81,8 +81,8 @@ export default function FinNav({ utilisateur }: Props) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={FIN.logoComplet} alt={FIN.organisation} className="fin-marque-logo" />
             <span className="fin-marque-texte">
-              <small>Département</small>
-              des finances
+              <small>Portail</small>
+              des dépenses
             </span>
           </Link>
           {liste.length > 0 && (

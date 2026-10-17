@@ -7,6 +7,7 @@ import { contexteFormulaire } from "../../components/circuit";
 import StatutTag from "../../components/StatutTag";
 import DemandeForm from "../../components/DemandeForm";
 import Decision from "./Decision";
+import Justificatifs from "./Justificatifs";
 import Icone from "../../components/Icone";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
     include: {
       demandeur: true,
       approbateur: true,
-      pieces: { select: { id: true, nom: true, taille: true }, orderBy: { createdAt: "asc" } },
+      pieces: { select: { id: true, nom: true, taille: true, justificatif: true }, orderBy: { createdAt: "asc" } },
       historique: { include: { auteur: true }, orderBy: { createdAt: "asc" } },
     },
   });
@@ -140,6 +141,7 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
                       <a href={`/api/pieces/${p.id}`} target="_blank" rel="noopener">
                         <Icone nom="trombone" taille={16} /> {p.nom}
                       </a>
+                      {p.justificatif && <span className="fin-tag s-payee" style={{ marginLeft: 6 }}>justificatif</span>}
                     </li>
                   ))}
                 </ul>
@@ -149,6 +151,14 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
         </div>
 
         <div>
+          {d.type === "decaissement" && ["approuvee", "payee"].includes(d.statut) && (
+            <Justificatifs
+              demandeId={d.id}
+              role={d.demandeurId === moi.id ? "demandeur" : moi.role === "superadmin" ? "finances" : "lecture"}
+              recusLe={d.justificatifsLe ? date(d.justificatifsLe) : null}
+              nbRappels={d.nbRappels}
+            />
+          )}
           <Decision
             demandeId={d.id}
             statut={d.statut}

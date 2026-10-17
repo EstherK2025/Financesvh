@@ -26,7 +26,7 @@ type Props = {
 };
 
 // Réduit les photos (factures prises au téléphone) avant l'envoi.
-async function compresser(f: File): Promise<File> {
+export async function compresser(f: File): Promise<File> {
   if (!f.type.startsWith("image/") || f.size < 600 * 1024) return f;
   try {
     const bmp = await createImageBitmap(f);
@@ -43,7 +43,7 @@ async function compresser(f: File): Promise<File> {
   }
 }
 
-const tailleLisible = (o: number) => (o > 1024 * 1024 ? `${(o / 1024 / 1024).toFixed(1)} Mo` : `${Math.ceil(o / 1024)} Ko`);
+export const tailleLisible = (o: number) => (o > 1024 * 1024 ? `${(o / 1024 / 1024).toFixed(1)} Mo` : `${Math.ceil(o / 1024)} Ko`);
 
 export default function DemandeForm({ demandeId, initial, piecesExistantes = [], destinataires, circuit }: Props) {
   const [v, setV] = useState<ValeursDemande>(initial);

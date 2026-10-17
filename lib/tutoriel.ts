@@ -37,7 +37,7 @@ export function etapesTutoriel(role: Role): Etape[] {
       titre: "Bienvenue",
       icone: "accueil",
       texte: [
-        "Cette plateforme du Département des finances de Vases d'Honneur sert à faire et à suivre les demandes d'argent.",
+        "Le Portail des dépenses de Vases d'Honneur sert à faire et à suivre les demandes de remboursement et de décaissement.",
         "Voici en quelques étapes comment elle fonctionne.",
       ],
     },
@@ -46,7 +46,7 @@ export function etapesTutoriel(role: Role): Etape[] {
       icone: "recu",
       texte: [
         "Remboursement : vous avez déjà payé une dépense et vous voulez être remboursé. La facture est obligatoire.",
-        "Décaissement : vous avez besoin des fonds avant la dépense (avance, paiement d'un fournisseur).",
+        "Décaissement : vous avez besoin des fonds avant la dépense (avance, paiement d'un fournisseur). Une fois approuvé, vous ajouterez les factures ou reçus (rappel par courriel tous les deux jours).",
       ],
     },
     {

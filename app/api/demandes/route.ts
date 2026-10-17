@@ -32,6 +32,6 @@ export async function POST(req: Request) {
       historique: { create: { auteurId: moi.id, action: "soumise" } },
     },
   });
-  await notifier(d.id);
+  await notifier(d.id, undefined, true);
   return NextResponse.json({ ok: true, id: d.id });
 }
