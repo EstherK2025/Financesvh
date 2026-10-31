@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { exigerUtilisateur } from "../components/garde";
 import { contexteFormulaire } from "../components/circuit";
 import DemandeForm from "../components/DemandeForm";
+import { categories } from "@/lib/fin-reglages";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function NouvellePage({ searchParams }: { searchParams: Pro
         }}
         destinataires={ctx.destinataires}
         circuit={ctx.circuit}
+        categories={await categories()}
       />
     </div>
   );

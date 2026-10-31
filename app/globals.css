@@ -1612,3 +1612,62 @@ textarea.fin-input {
   padding: 4px 12px 14px;
   border-top: 1px solid var(--fin-trait);
 }
+
+/* Justificatifs de dépense (décaissements) */
+.fin-justificatifs.attente {
+  border-left: 4px solid var(--fin-accent);
+}
+.fin-alerte-justifs {
+  background: var(--fin-accent-clair);
+  border: 1px solid var(--fin-accent);
+  border-radius: var(--fin-r);
+  padding: 4px 16px 14px;
+  margin-top: 18px;
+}
+.fin-alerte-justifs p {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+.fin-config {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.fin-config li {
+  padding: 8px 12px;
+  border-radius: var(--fin-r-sm);
+  background: var(--fin-fond);
+}
+.fin-config li.ok {
+  background: var(--fin-primaire-clair);
+}
+.fin-config li.ko {
+  background: var(--fin-rouge-clair);
+  color: var(--fin-rouge);
+}
+.fin-config b {
+  margin-right: 6px;
+}
+.fin-config em {
+  font-style: normal;
+  color: var(--fin-gris);
+  font-size: 12.5px;
+}
+
+/* Suppression d'un fichier : autorisations de 3 super administrateurs */
+.fin-suppression {
+  margin: 6px 0 4px;
+  padding: 10px 12px;
+  border-radius: var(--fin-r-sm);
+  background: var(--fin-rouge-clair);
+  border-left: 4px solid var(--fin-rouge);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.fin-suppression b {
+  color: var(--fin-rouge);
+}

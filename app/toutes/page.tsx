@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { CATEGORIES, STATUTS, TYPES, formatMontant, type Statut } from "@/lib/finances";
+import { STATUTS, TYPES, formatMontant, type Statut } from "@/lib/finances";
 import { exigerUtilisateur } from "../components/garde";
 import DemandeListe from "../components/DemandeListe";
+import { categories } from "@/lib/fin-reglages";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,8 @@ export default async function ToutesPage({ searchParams }: { searchParams: Promi
     if (g.statut === "payee") c.paye += m;
     cats.set(g.categorie, c);
   }
-  const ordre = [...CATEGORIES, ...[...cats.keys()].filter((k) => !(CATEGORIES as readonly string[]).includes(k))];
+  const listeCats = await categories();
+  const ordre = [...listeCats, ...[...cats.keys()].filter((k) => !listeCats.includes(k))];
   const lignes = ordre.filter((k) => cats.has(k)).map((k) => ({ categorie: k, ...cats.get(k)! }));
   const lien = (p: Record<string, string | number>) => {
     const q = new URLSearchParams({ ...(statut ? { statut } : {}), ...(type ? { type } : {}), annee: String(annee) });

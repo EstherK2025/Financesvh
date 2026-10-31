@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatMontant, libelleOrg, nomUtilisateur } from "@/lib/finances";
+import { FIN, formatMontant, libelleOrg, nomUtilisateur, reference } from "@/lib/finances";
 import { exigerUtilisateur } from "./components/garde";
 import DemandeListe from "./components/DemandeListe";
 import Icone from "./components/Icone";
@@ -50,6 +50,40 @@ export default async function TableauDeBord() {
       : Promise.resolve([]),
   ]);
 
+  // Demandes que j'ai déjà traitées (approuvées, refusées, payées) — elles
+  // quittent « À approuver » mais restent visibles ici.
+  const [traiteesParMoi, justifsEnAttente] = await Promise.all([
+    estLeader || finances
+      ? prisma.finHistorique
+          .findMany({
+            where: { auteurId: moi.id, action: { in: ["approuvee_leader", "approuvee_finances", "refusee", "payee", "justificatifs_recus"] } },
+            orderBy: { createdAt: "desc" },
+            take: 120,
+            select: { demandeId: true },
+          })
+          .then(async (h) => {
+            const ids = [...new Set(h.map((x) => x.demandeId))].slice(0, 30);
+            const ds = await prisma.finDemande.findMany({ where: { id: { in: ids } }, include: avecDemandeur });
+            return ids.map((i) => ds.find((x) => x.id === i)!).filter(Boolean);
+          })
+      : Promise.resolve([]),
+    finances
+      ? prisma.finDemande.findMany({
+          where: { type: "decaissement", statut: { in: ["approuvee", "payee"] }, justificatifsLe: null, demandeurId: { not: moi.id } },
+          orderBy: { approuveeLe: "asc" },
+          include: avecDemandeur,
+        })
+      : Promise.resolve([]),
+  ]);
+  const suppressionsAAutoriser = finances
+    ? await prisma.finSuppression.findMany({
+        where: { statut: "en_attente", NOT: { autorisations: { has: moi.id } } },
+        orderBy: { createdAt: "asc" },
+        include: { demande: { select: { numero: true } } },
+      })
+    : [];
+  const mesJustifs = mes.filter((d) => d.type === "decaissement" && ["approuvee", "payee"].includes(d.statut) && !d.justificatifsLe);
+
   const aTraiter = aApprouverLeader.length + aApprouverFinances.length + aPayer.length;
   const enCours = mes.filter((d) => ["attente_leader", "attente_finances", "approuvee"].includes(d.statut));
   const aReviser = mes.filter((d) => d.statut === "a_reviser");
@@ -59,7 +93,7 @@ export default async function TableauDeBord() {
   return (
     <>
       <section className="fin-hero">
-        <div className="fin-hero-sur">{libelleOrg(moi.ministere, moi.departement) || "Département des finances"}</div>
+        <div className="fin-hero-sur">{libelleOrg(moi.ministere, moi.departement) || FIN.nom}</div>
         <h1>Bonjour {nomUtilisateur(moi)}</h1>
         <p className="sous">
           {aTraiter > 0
@@ -104,6 +138,14 @@ export default async function TableauDeBord() {
         )}
       </div>
 
+      {mesJustifs.length > 0 && (
+        <div className="fin-alerte-justifs">
+          <h2>Justificatifs à fournir</h2>
+          <p>Ajoutez les factures ou reçus des dépenses faites avec ces fonds (une fois les fonds envoyés, rappel par courriel tous les deux jours).</p>
+          <DemandeListe demandes={mesJustifs} vide="" />
+        </div>
+      )}
+
       {aReviser.length > 0 && (
         <>
           <h2>À réviser ou annuler</h2>
@@ -118,12 +160,41 @@ export default async function TableauDeBord() {
         </>
       )}
 
+      {suppressionsAAutoriser.length > 0 && (
+        <div className="fin-suppression" style={{ marginTop: 18 }}>
+          <b>Suppressions de fichiers à autoriser ({suppressionsAAutoriser.length})</b>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            {suppressionsAAutoriser.map((s) => (
+              <li key={s.id}>
+                <Link href={`/demande/${s.demandeId}`}>
+                  {reference(s.demande.numero)} — « {s.pieceNom} »
+                </Link>{" "}
+                · {[...new Set(s.autorisations)].length}/3 · motif : {s.motif}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {finances && (
         <>
           <h2>À approuver — finances</h2>
           <DemandeListe demandes={aApprouverFinances} avecDemandeur vide="Aucune demande en attente des finances." />
           <h2>Approuvées — à payer</h2>
           <DemandeListe demandes={aPayer} avecDemandeur pdf vide="Aucun paiement en attente." />
+          {justifsEnAttente.length > 0 && (
+            <>
+              <h2>Décaissements — justificatifs en attente</h2>
+              <DemandeListe demandes={justifsEnAttente} avecDemandeur vide="" />
+            </>
+          )}
+        </>
+      )}
+
+      {(estLeader || finances) && (
+        <>
+          <h2>Déjà traitées par moi</h2>
+          <DemandeListe demandes={traiteesParMoi} avecDemandeur vide="Vous n'avez encore traité aucune demande." />
         </>
       )}
 

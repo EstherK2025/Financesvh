@@ -1,6 +1,6 @@
 import { randomInt } from "crypto";
 import { prisma } from "./prisma";
-import { TITRES_DEFAUT, titreDans } from "./finances";
+import { CATEGORIES, TITRES_DEFAUT, titreDans } from "./finances";
 
 // ───────────────────────────────────────────────────────────
 // Réglages modifiables depuis la plateforme (super administrateur).
@@ -55,6 +55,23 @@ export async function titres(): Promise<string[]> {
 export async function changerTitres(liste: string[]) {
   const texte = JSON.stringify(liste);
   await prisma.finReglage.upsert({ where: { cle: "titres" }, create: { cle: "titres", texte }, update: { texte } });
+}
+
+// Catégories de dépenses modifiables par le super administrateur.
+export async function categories(): Promise<string[]> {
+  const r = await prisma.finReglage.findUnique({ where: { cle: "categories" } });
+  try {
+    const l = JSON.parse(r?.texte || "null");
+    if (Array.isArray(l) && l.every((x) => typeof x === "string") && l.length) return l;
+  } catch {
+    /* valeur illisible : catégories par défaut */
+  }
+  return [...CATEGORIES];
+}
+
+export async function changerCategories(liste: string[]) {
+  const texte = JSON.stringify(liste);
+  await prisma.finReglage.upsert({ where: { cle: "categories" }, create: { cle: "categories", texte }, update: { texte } });
 }
 
 export async function titreValide(t: unknown): Promise<string | null> {

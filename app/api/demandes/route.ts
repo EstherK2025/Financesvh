@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { utilisateurCourant } from "@/lib/fin-auth";
 import { approbateurPour, notifier, statutInitial } from "@/lib/fin-demandes";
 import { lireChamps, lireFichiers } from "@/lib/fin-formulaire";
+import { categories } from "@/lib/fin-reglages";
 
 // Nouvelle demande (multipart) : champs + pièces jointes.
 export async function POST(req: Request) {
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
 
   const fd = await req.formData().catch(() => null);
   if (!fd) return NextResponse.json({ error: "Formulaire invalide (fichiers trop lourds ?)." }, { status: 400 });
-  const c = lireChamps(fd);
+  const c = lireChamps(fd, await categories());
   if (!c.ok) return NextResponse.json({ error: c.erreur }, { status: 400 });
   const f = await lireFichiers(fd);
   if (!f.ok) return NextResponse.json({ error: f.erreur }, { status: 400 });
@@ -32,6 +33,6 @@ export async function POST(req: Request) {
       historique: { create: { auteurId: moi.id, action: "soumise" } },
     },
   });
-  await notifier(d.id);
+  await notifier(d.id, undefined, true);
   return NextResponse.json({ ok: true, id: d.id });
 }

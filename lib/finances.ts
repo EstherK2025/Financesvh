@@ -5,7 +5,7 @@
 // ───────────────────────────────────────────────────────────
 
 export const FIN = {
-  nom: "Département des finances",
+  nom: "Portail des dépenses",
   organisation: "Vases d'Honneur",
   sigle: "VH",
   // Logo complet Vases d'Honneur : public/vh-logo.png, remplaçable par le super
@@ -44,6 +44,7 @@ export function libelleOrg(m: string | null | undefined, d: string | null | unde
 }
 
 // Catégories de dépenses (👉 ajouter / retirer librement).
+// Catégories par défaut (modifiables ensuite dans Réglages).
 export const CATEGORIES = [
   "Location matériel",
   "Hébergement",
@@ -102,6 +103,11 @@ export const ACTIONS_HISTO: Record<string, string> = {
   annulee: "Annulée par le demandeur",
   payee: "Paiement effectué",
   attribuee: "1re approbation réattribuée",
+  justificatifs: "Justificatifs de dépense ajoutés",
+  justificatifs_recus: "Justificatifs marqués reçus par les finances",
+  suppression_demandee: "Suppression d'un fichier demandée",
+  suppression_refusee: "Suppression d'un fichier refusée ou annulée",
+  piece_supprimee: "Fichier supprimé (3 autorisations)",
 };
 
 // Libellé d'une étape de l'historique (précise l'approbateur externe).
