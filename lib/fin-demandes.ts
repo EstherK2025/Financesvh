@@ -101,7 +101,7 @@ export async function notifier(demandeId: string, motif?: string, nouvelle = fal
         nomUtilisateur(dem),
         info,
         "Bonne nouvelle : les finances ont approuvé votre demande. Le paiement suivra." +
-          (d.type === "decaissement" ? " Pensez à ajouter sur la plateforme les justificatifs (factures, reçus) une fois la dépense faite." : ""),
+          (d.type === "decaissement" ? " Une fois les fonds reçus, ajoutez sur la plateforme les justificatifs (factures, reçus) de vos dépenses." : ""),
       );
       break;
     case "payee":

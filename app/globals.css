@@ -1657,3 +1657,17 @@ textarea.fin-input {
   color: var(--fin-gris);
   font-size: 12.5px;
 }
+
+/* Suppression d'un fichier : autorisations de 3 super administrateurs */
+.fin-suppression {
+  margin: 6px 0 4px;
+  padding: 10px 12px;
+  border-radius: var(--fin-r-sm);
+  background: var(--fin-rouge-clair);
+  border-left: 4px solid var(--fin-rouge);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.fin-suppression b {
+  color: var(--fin-rouge);
+}

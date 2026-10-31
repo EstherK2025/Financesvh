@@ -134,6 +134,41 @@ export async function courrielNouvelleDemande(to: string | null, prenom: string,
   );
 }
 
+// Aux autres super administrateurs : une suppression de fichier attend leur autorisation.
+export async function courrielAutorisationSuppression(
+  to: string | null,
+  prenom: string,
+  s: { demandeId: string; numero: number; fichier: string; motif: string; par: string },
+) {
+  await envoyerSur(
+    to,
+    `Autorisation requise : suppression d'un fichier — ${reference(s.numero)}`,
+    gabarit(
+      "Suppression d'un fichier à autoriser",
+      p(`Bonjour ${esc(prenom)},`) +
+        p(`${esc(s.par)} demande la suppression du fichier « ${esc(s.fichier)} » de la demande ${reference(s.numero)}.`) +
+        `<div style="border-left:4px solid #000; background:#f4f4f4; padding:12px 14px; margin:12px 0; font-size:14px;"><b>Motif :</b> ${esc(s.motif)}</div>` +
+        p("La suppression n'a lieu qu'après l'autorisation de 3 super administrateurs."),
+      { libelle: "Voir la demande", url: lienFinances(`/demande/${s.demandeId}`) },
+    ),
+    prenom,
+  );
+}
+
+// Rappel à l'approbateur : une demande attend sa décision depuis plus de 2 jours.
+export async function courrielRappelApprobation(to: string | null, prenom: string, d: DemandeCourriel, jours: number) {
+  await envoyerSur(
+    to,
+    `Rappel : demande à approuver — ${reference(d.numero)} (${jours} jours)`,
+    gabarit(
+      "Une demande attend toujours votre décision",
+      p(`Bonjour ${esc(prenom)},`) + p(`La demande de ${esc(d.demandeurNom)} attend votre approbation depuis ${jours} jours.`) + resume(d),
+      { libelle: "Voir la demande", url: lienFinances(`/demande/${d.id}`) },
+    ),
+    prenom,
+  );
+}
+
 // Décaissement : rappel de fournir les justificatifs (preuves de dépense).
 export async function courrielRappelJustificatifs(to: string | null, prenom: string, d: DemandeCourriel, numeroRappel: number) {
   await envoyerSur(
@@ -143,7 +178,7 @@ export async function courrielRappelJustificatifs(to: string | null, prenom: str
       "Justificatifs de dépense à fournir",
       p(`Bonjour ${esc(prenom)},`) +
         p(
-          `Votre demande de décaissement a été approuvée par les finances. Merci d'ajouter sur la plateforme les preuves de dépense (factures, reçus) correspondant à ces fonds.`,
+          `Les fonds de votre demande de décaissement vous ont été envoyés. Merci d'ajouter sur la plateforme les preuves de dépense (factures, reçus) correspondant à ces fonds.`,
         ) +
         p(`<span style="color:#666; font-size:13px;">Rappel n° ${numeroRappel} — un rappel est envoyé tous les deux jours jusqu'à réception des justificatifs.</span>`) +
         resume(d),

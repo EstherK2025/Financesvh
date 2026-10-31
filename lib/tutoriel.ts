@@ -46,7 +46,7 @@ export function etapesTutoriel(role: Role): Etape[] {
       icone: "recu",
       texte: [
         "Remboursement : vous avez déjà payé une dépense et vous voulez être remboursé. La facture est obligatoire.",
-        "Décaissement : vous avez besoin des fonds avant la dépense (avance, paiement d'un fournisseur). Une fois approuvé, vous ajouterez les factures ou reçus (rappel par courriel tous les deux jours).",
+        "Décaissement : vous avez besoin des fonds avant la dépense (avance, paiement d'un fournisseur). Une fois les fonds reçus, vous ajouterez les factures ou reçus (rappel par courriel tous les deux jours).",
       ],
     },
     {

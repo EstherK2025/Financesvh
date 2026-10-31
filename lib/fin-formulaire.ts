@@ -1,4 +1,4 @@
-import { CATEGORIES, MODES_PAIEMENT, PIECES, TYPES, parseMontant } from "./finances";
+import { MODES_PAIEMENT, PIECES, TYPES, parseMontant } from "./finances";
 
 // Lecture et validation d'un formulaire de demande (multipart/form-data).
 
@@ -17,11 +17,12 @@ export type FichierRecu = { nom: string; typeMime: string; taille: number; donne
 
 const texte = (fd: FormData, k: string, max: number) => String(fd.get(k) ?? "").trim().slice(0, max);
 
-export function lireChamps(fd: FormData): { ok: true; champs: ChampsDemande } | { ok: false; erreur: string } {
+// categoriesOk : catégories proposées (Réglages) + celle déjà enregistrée sur la demande.
+export function lireChamps(fd: FormData, categoriesOk: string[]): { ok: true; champs: ChampsDemande } | { ok: false; erreur: string } {
   const type = texte(fd, "type", 20);
   if (!(type in TYPES)) return { ok: false, erreur: "Type de demande invalide." };
   const categorie = texte(fd, "categorie", 80);
-  if (!(CATEGORIES as readonly string[]).includes(categorie)) return { ok: false, erreur: "Choisissez une catégorie." };
+  if (!categoriesOk.includes(categorie)) return { ok: false, erreur: "Choisissez une catégorie." };
   const objet = texte(fd, "objet", 160);
   if (!objet) return { ok: false, erreur: "Indiquez l'objet de la demande." };
   const montant = parseMontant(fd.get("montant"));

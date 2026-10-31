@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { utilisateurCourant } from "@/lib/fin-auth";
 import { actionsPossibles, approbateurPour, notifier, statutInitial } from "@/lib/fin-demandes";
 import { lireChamps, lireFichiers } from "@/lib/fin-formulaire";
+import { categories } from "@/lib/fin-reglages";
 
 // Révision d'une demande refusée puis renvoi dans le circuit (multipart).
 // Champs « supprimerPieces » : ids des pièces existantes à retirer.
@@ -16,7 +17,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   const fd = await req.formData().catch(() => null);
   if (!fd) return NextResponse.json({ error: "Formulaire invalide (fichiers trop lourds ?)." }, { status: 400 });
-  const c = lireChamps(fd);
+  const c = lireChamps(fd, [...(await categories()), d.categorie]);
   if (!c.ok) return NextResponse.json({ error: c.erreur }, { status: 400 });
   const f = await lireFichiers(fd);
   if (!f.ok) return NextResponse.json({ error: f.erreur }, { status: 400 });

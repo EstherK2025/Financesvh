@@ -100,6 +100,8 @@ model FinDemande {
   justificatifsLe   DateTime? // justificatifs reçus (fin des rappels)
   dernierRappel     DateTime?
   nbRappels         Int             @default(0)
+  // Rappel aux approbateurs quand une demande attend leur décision depuis 2 jours.
+  rappelApprobation DateTime?
   demandeurId       String
   demandeur         FinUtilisateur  @relation("FinDemandeur", fields: [demandeurId], references: [id])
   // Personne qui approuve à la 1ʳᵉ étape (leader du demandeur, ou destinataire
@@ -112,8 +114,10 @@ model FinDemande {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
-  pieces     FinPiece[]
-  historique FinHistorique[]
+  pieces FinPiece[]
+
+  suppressions FinSuppression[]
+  historique   FinHistorique[]
 
   @@index([demandeurId])
   @@index([approbateurId])
@@ -203,4 +207,25 @@ model FinCourriel {
   erreur       String?
 
   @@index([createdAt])
+}
+
+// Suppression d'une pièce jointe (facture, justificatif) : demandée par un super
+// administrateur, effectuée seulement après l'autorisation de 3 super
+// administrateurs différents (le demandeur compte pour un).
+model FinSuppression {
+  id            String     @id @default(cuid())
+  createdAt     DateTime   @default(now())
+  demandeId     String
+  demande       FinDemande @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+  pieceId       String // pas de relation : la pièce disparaît une fois supprimée
+  pieceNom      String
+  motif         String
+  demandeurId   String
+  autorisations String[] // super administrateurs ayant autorisé (dont le demandeur)
+  statut        String     @default("en_attente") // en_attente | effectuee | refusee | annulee
+  refusParId    String?
+  termineeLe    DateTime?
+
+  @@index([statut])
+  @@index([demandeId])
 }

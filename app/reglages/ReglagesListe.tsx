@@ -3,18 +3,20 @@
 import { useState } from "react";
 import { appeler } from "../components/api";
 
-// Liste des titres proposés (GA, AP, PA…) : ajouter, retirer, réordonner.
-export default function ReglagesTitres({ titres }: { titres: string[] }) {
-  const [liste, setListe] = useState(titres);
+type Props = { cle: "titres" | "categories"; valeurs: string[]; titre: string; aide: string; exemple: string; max: number; libelle: string };
+
+// Liste modifiable (titres des personnes, catégories de dépenses) : ajouter, retirer, réordonner.
+export default function ReglagesListe({ cle, valeurs, titre, aide, exemple, max, libelle }: Props) {
+  const [liste, setListe] = useState(valeurs);
   const [nouveau, setNouveau] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
   async function enregistrer(l: string[]) {
     setMsg(null);
-    const r = await appeler<{ titres: string[] }>("/api/reglages", { json: { titres: l } });
+    const r = await appeler<{ liste: string[] }>("/api/reglages", { json: { [cle]: l } });
     if (!r.ok) return setMsg({ ok: false, t: r.erreur });
-    setListe(r.data.titres);
-    setMsg({ ok: true, t: "Liste des titres enregistrée." });
+    setListe(r.data.liste);
+    setMsg({ ok: true, t: "Liste enregistrée." });
   }
   const deplacer = (i: number, d: number) => {
     const l = [...liste];
@@ -26,10 +28,8 @@ export default function ReglagesTitres({ titres }: { titres: string[] }) {
 
   return (
     <div className="fin-carte">
-      <h2 style={{ marginTop: 0 }}>Titres des personnes</h2>
-      <p style={{ fontSize: 14, marginBottom: 12 }}>
-        Proposés dans la liste « Titre » (première connexion, comptes). Un titre retiré reste affiché pour les personnes qui l&apos;ont déjà.
-      </p>
+      <h2 style={{ marginTop: 0 }}>{titre}</h2>
+      <p style={{ fontSize: 14, marginBottom: 12 }}>{aide}</p>
       {msg && <div className={msg.ok ? "fin-succes" : "fin-erreur"}>{msg.t}</div>}
       <ul className="fin-puces">
         {liste.map((t, i) => (
@@ -57,7 +57,7 @@ export default function ReglagesTitres({ titres }: { titres: string[] }) {
           if (nouveau.trim()) enregistrer([...liste, nouveau.trim()]).then(() => setNouveau(""));
         }}
       >
-        <input className="fin-input" style={{ flex: 1, minWidth: 160 }} placeholder="Nouveau titre (ex. Pasteur)" value={nouveau} onChange={(e) => setNouveau(e.target.value)} maxLength={30} />
+        <input className="fin-input" style={{ flex: 1, minWidth: 160 }} placeholder={exemple} value={nouveau} onChange={(e) => setNouveau(e.target.value)} maxLength={max} aria-label={libelle} />
         <button className="fin-btn">Ajouter</button>
       </form>
     </div>

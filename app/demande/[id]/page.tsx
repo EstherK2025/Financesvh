@@ -9,6 +9,9 @@ import DemandeForm from "../../components/DemandeForm";
 import Decision from "./Decision";
 import Justificatifs from "./Justificatifs";
 import Icone from "../../components/Icone";
+import { categories } from "@/lib/fin-reglages";
+import SuppressionPiece from "./SuppressionPiece";
+import { AUTORISATIONS_REQUISES, nbSuperAdminsActifs } from "@/lib/fin-suppressions";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +52,27 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
           })
         ).map((u) => ({ id: u.id, nom: `${nomUtilisateur(u)} — ${libelleCompte(u)}` }))
       : null;
+  // Super administrateur : suppressions de fichiers en attente d'autorisation.
+  const superadmin = moi.role === "superadmin";
+  const [suppressions, nbSupers] = superadmin
+    ? await Promise.all([prisma.finSuppression.findMany({ where: { demandeId: d.id, statut: "en_attente" } }), nbSuperAdminsActifs()])
+    : [[], 0];
+  const nomsSupers = superadmin
+    ? new Map((await prisma.finUtilisateur.findMany({ where: { role: "superadmin" } })).map((u) => [u.id, nomUtilisateur(u)]))
+    : new Map<string, string>();
+  const attentePour = (pieceId: string) => {
+    const s = suppressions.find((x) => x.pieceId === pieceId);
+    return s
+      ? {
+          id: s.id,
+          motif: s.motif,
+          par: nomsSupers.get(s.demandeurId) || "—",
+          autorises: [...new Set(s.autorisations)].map((i) => nomsSupers.get(i) || "—"),
+          dejaAutorise: s.autorisations.includes(moi.id),
+          estDemandeur: s.demandeurId === moi.id,
+        }
+      : null;
+  };
   const date = (x: Date | null) => (x ? x.toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" }) : "—");
 
   return (
@@ -142,6 +166,9 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
                         <Icone nom="trombone" taille={16} /> {p.nom}
                       </a>
                       {p.justificatif && <span className="fin-tag s-payee" style={{ marginLeft: 6 }}>justificatif</span>}
+                      {superadmin && (
+                        <SuppressionPiece pieceId={p.id} nom={p.nom} attente={attentePour(p.id)} requis={AUTORISATIONS_REQUISES} possible={nbSupers >= AUTORISATIONS_REQUISES} />
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -213,6 +240,7 @@ export default async function DemandePage({ params }: { params: Promise<{ id: st
             piecesExistantes={d.pieces.map((p) => ({ id: p.id, nom: p.nom }))}
             destinataires={ctx.destinataires}
             circuit={ctx.circuit}
+            categories={await categories()}
           />
         </div>
       )}

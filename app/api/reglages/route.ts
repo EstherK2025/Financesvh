@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { utilisateurCourant } from "@/lib/fin-auth";
-import { changerDoubleAuth, changerMdpTemporaire, changerTitres } from "@/lib/fin-reglages";
+import { changerCategories, changerDoubleAuth, changerMdpTemporaire, changerTitres } from "@/lib/fin-reglages";
 import { journaliser } from "@/lib/fin-securite";
 
 // Réglages (super administrateur) : { mdpTemporaire? } ou { doubleAuth? } ou { titres? }.
@@ -13,7 +13,14 @@ export async function POST(req: Request) {
     if (liste.length === 0 || liste.length > 30) return NextResponse.json({ error: "Indiquez entre 1 et 30 titres." }, { status: 400 });
     await changerTitres(liste);
     await journaliser("reglage_modifie", { utilisateurId: moi.id, detail: "Titres" });
-    return NextResponse.json({ ok: true, titres: liste });
+    return NextResponse.json({ ok: true, titres: liste, liste });
+  }
+  if (Array.isArray(b.categories)) {
+    const liste = [...new Set(b.categories.map((t: unknown) => String(t ?? "").trim().replace(/\s+/g, " ").slice(0, 60)).filter(Boolean))] as string[];
+    if (liste.length === 0 || liste.length > 50) return NextResponse.json({ error: "Indiquez entre 1 et 50 catégories." }, { status: 400 });
+    await changerCategories(liste);
+    await journaliser("reglage_modifie", { utilisateurId: moi.id, detail: "Catégories de dépenses" });
+    return NextResponse.json({ ok: true, liste });
   }
   if (typeof b.doubleAuth === "boolean") {
     await changerDoubleAuth(b.doubleAuth);

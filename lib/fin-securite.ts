@@ -87,6 +87,10 @@ export const EVENEMENTS: Record<string, string> = {
   reglage_modifie: "Réglage modifié",
   purge: "Toutes les demandes supprimées",
   export: "Export des demandes",
+  suppression_demandee: "Suppression d'un justificatif demandée",
+  suppression_autorisee: "Suppression d'un justificatif autorisée",
+  suppression_refusee: "Suppression d'un justificatif refusée ou annulée",
+  piece_supprimee: "Justificatif supprimé (3 autorisations)",
 };
 
 export async function journaliser(

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { FIN, formatMontant, libelleOrg, nomUtilisateur } from "@/lib/finances";
+import { FIN, formatMontant, libelleOrg, nomUtilisateur, reference } from "@/lib/finances";
 import { exigerUtilisateur } from "./components/garde";
 import DemandeListe from "./components/DemandeListe";
 import Icone from "./components/Icone";
@@ -75,6 +75,13 @@ export default async function TableauDeBord() {
         })
       : Promise.resolve([]),
   ]);
+  const suppressionsAAutoriser = finances
+    ? await prisma.finSuppression.findMany({
+        where: { statut: "en_attente", NOT: { autorisations: { has: moi.id } } },
+        orderBy: { createdAt: "asc" },
+        include: { demande: { select: { numero: true } } },
+      })
+    : [];
   const mesJustifs = mes.filter((d) => d.type === "decaissement" && ["approuvee", "payee"].includes(d.statut) && !d.justificatifsLe);
 
   const aTraiter = aApprouverLeader.length + aApprouverFinances.length + aPayer.length;
@@ -134,7 +141,7 @@ export default async function TableauDeBord() {
       {mesJustifs.length > 0 && (
         <div className="fin-alerte-justifs">
           <h2>Justificatifs à fournir</h2>
-          <p>Ces décaissements ont été approuvés : ajoutez les factures ou reçus des dépenses (rappel par courriel tous les deux jours).</p>
+          <p>Ajoutez les factures ou reçus des dépenses faites avec ces fonds (une fois les fonds envoyés, rappel par courriel tous les deux jours).</p>
           <DemandeListe demandes={mesJustifs} vide="" />
         </div>
       )}
@@ -151,6 +158,22 @@ export default async function TableauDeBord() {
           <h2>À approuver — {moi.ministere ? `ministère ${moi.ministere}` : "1ʳᵉ approbation"}</h2>
           <DemandeListe demandes={aApprouverLeader} avecDemandeur vide="Aucune demande en attente de votre approbation." />
         </>
+      )}
+
+      {suppressionsAAutoriser.length > 0 && (
+        <div className="fin-suppression" style={{ marginTop: 18 }}>
+          <b>Suppressions de fichiers à autoriser ({suppressionsAAutoriser.length})</b>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            {suppressionsAAutoriser.map((s) => (
+              <li key={s.id}>
+                <Link href={`/demande/${s.demandeId}`}>
+                  {reference(s.demande.numero)} — « {s.pieceNom} »
+                </Link>{" "}
+                · {[...new Set(s.autorisations)].length}/3 · motif : {s.motif}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {finances && (

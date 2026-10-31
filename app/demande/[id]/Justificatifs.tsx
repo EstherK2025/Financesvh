@@ -57,10 +57,10 @@ export default function Justificatifs({ demandeId, role, recusLe, nbRappels }: P
       ) : (
         <p style={{ fontSize: 14, marginBottom: 12 }}>
           {role === "demandeur"
-            ? "Votre décaissement a été approuvé. Ajoutez ici les factures ou reçus des dépenses faites avec ces fonds."
+            ? "Ajoutez ici les factures ou reçus des dépenses faites avec ces fonds."
             : "En attente des factures ou reçus du demandeur."}{" "}
           <span style={{ color: "var(--fin-gris)" }}>
-            Rappel par courriel tous les deux jours{nbRappels ? ` · ${nbRappels} rappel${nbRappels > 1 ? "s" : ""} envoyé${nbRappels > 1 ? "s" : ""}` : ""}.
+            Une fois les fonds envoyés, rappel par courriel tous les deux jours{nbRappels ? ` · ${nbRappels} rappel${nbRappels > 1 ? "s" : ""} envoyé${nbRappels > 1 ? "s" : ""}` : ""}.
           </span>
         </p>
       )}

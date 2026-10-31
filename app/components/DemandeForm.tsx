@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CATEGORIES, MODES_PAIEMENT, PIECES, TYPES, TYPES_AIDE, type TypeDemande } from "@/lib/finances";
+import { MODES_PAIEMENT, PIECES, TYPES, TYPES_AIDE, type TypeDemande } from "@/lib/finances";
 import { appeler } from "./api";
 import Icone from "./Icone";
 
@@ -23,6 +23,7 @@ type Props = {
   piecesExistantes?: { id: string; nom: string }[];
   destinataires?: { id: string; nom: string }[]; // super admin : à qui envoyer sa demande
   circuit: string; // phrase expliquant le trajet de la demande
+  categories: string[]; // Réglages (+ celle déjà choisie)
 };
 
 // Réduit les photos (factures prises au téléphone) avant l'envoi.
@@ -45,7 +46,7 @@ export async function compresser(f: File): Promise<File> {
 
 export const tailleLisible = (o: number) => (o > 1024 * 1024 ? `${(o / 1024 / 1024).toFixed(1)} Mo` : `${Math.ceil(o / 1024)} Ko`);
 
-export default function DemandeForm({ demandeId, initial, piecesExistantes = [], destinataires, circuit }: Props) {
+export default function DemandeForm({ demandeId, initial, piecesExistantes = [], destinataires, circuit, categories }: Props) {
   const [v, setV] = useState<ValeursDemande>(initial);
   const [fichiers, setFichiers] = useState<File[]>([]);
   const [aSupprimer, setASupprimer] = useState<string[]>([]);
@@ -106,7 +107,7 @@ export default function DemandeForm({ demandeId, initial, piecesExistantes = [],
             <span>Catégorie *</span>
             <select className="fin-input" required value={v.categorie} onChange={maj("categorie")}>
               <option value="">— Choisir —</option>
-              {CATEGORIES.map((c) => (
+              {(initial.categorie && !categories.includes(initial.categorie) ? [...categories, initial.categorie] : categories).map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
